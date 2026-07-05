@@ -56,3 +56,13 @@ describe('loadState', () => {
     expect(loadState(now, today).prayers.some(p => p.prayedToday)).toBe(true)
   })
 })
+
+describe('saveState', () => {
+  it('does not throw when storage writes fail', () => {
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError')
+    })
+    expect(() => saveState(seedState(now, today))).not.toThrow()
+    spy.mockRestore()
+  })
+})

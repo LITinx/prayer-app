@@ -43,7 +43,15 @@ export function loadState(now: number, today: string): AppState {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return seedState(now, today)
     const s = JSON.parse(raw) as AppState
-    if (!Array.isArray(s.prayers) || !s.appStreak || typeof s.lastVisitDate !== 'string') {
+    if (
+      !Array.isArray(s.prayers) ||
+      !Array.isArray(s.answered) ||
+      !Array.isArray(s.groups) ||
+      !s.feeds || typeof s.feeds !== 'object' ||
+      !s.appStreak || typeof s.appStreak.count !== 'number' || typeof s.appStreak.lastPrayedDate !== 'string' ||
+      !s.profile || typeof s.profile.name !== 'string' ||
+      typeof s.lastVisitDate !== 'string'
+    ) {
       return seedState(now, today)
     }
     if (s.lastVisitDate !== today) {
