@@ -1693,6 +1693,7 @@ function NavItem({ icon, label, active, onClick }: { icon: string; label: string
   return (
     <button
       onClick={onClick}
+      aria-current={active ? 'page' : undefined}
       className={`flex flex-col items-center gap-[3px] transition-colors ${
         active ? 'text-[oklch(0.55_0.13_252)]' : 'text-[oklch(0.68_0.02_250)]'
       }`}
