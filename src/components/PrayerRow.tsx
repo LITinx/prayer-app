@@ -31,6 +31,7 @@ export function PrayerRow({ prayer, first }: { prayer: Prayer; first: boolean })
         </div>
       </div>
       <button
+        aria-label={`Mark "${prayer.text}" as answered`}
         onClick={() => dispatch({ type: 'MARK_ANSWERED', id: prayer.id, now: Date.now() })}
         className="flex-none text-[9.5px] font-bold tracking-[.07em] uppercase text-[oklch(0.5_0.1_155)] border border-[oklch(0.82_0.06_155)] px-[9px] py-1.5 rounded whitespace-nowrap"
       >

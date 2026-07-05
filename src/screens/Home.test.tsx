@@ -25,7 +25,7 @@ describe('Home', () => {
 
   it('marking answered removes the row and updates the count', async () => {
     ui()
-    await userEvent.click(screen.getAllByRole('button', { name: 'Answered' })[0])
+    await userEvent.click(screen.getByRole('button', { name: /Mark .*Grandma Ruth.* as answered/ }))
     expect(screen.queryByText(/Grandma Ruth's recovery/)).not.toBeInTheDocument()
     expect(screen.getByText('4 Active')).toBeInTheDocument()
   })
