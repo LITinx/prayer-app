@@ -49,4 +49,26 @@ describe('useSpeech', () => {
     expect(result.current.error).toBe('not-allowed')
     expect(result.current.listening).toBe(false)
   })
+
+  it('stops the recognizer and detaches handlers on unmount', () => {
+    ;(window as Record<string, unknown>).SpeechRecognition = FakeRec
+    const { result, unmount } = renderHook(() => useSpeech())
+    act(() => result.current.start())
+    const rec = FakeRec.instance!
+    const stopSpy = vi.spyOn(rec, 'stop')
+    unmount()
+    expect(stopSpy).toHaveBeenCalled()
+    expect(rec.onresult).toBeNull()
+  })
+
+  it('starting again stops the previous session first', () => {
+    ;(window as Record<string, unknown>).SpeechRecognition = FakeRec
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.start())
+    const first = FakeRec.instance!
+    const stopSpy = vi.spyOn(first, 'stop')
+    act(() => result.current.start())
+    expect(stopSpy).toHaveBeenCalled()
+    expect(first.onresult).toBeNull()
+  })
 })

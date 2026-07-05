@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface SpeechRecognitionLike {
   continuous: boolean
@@ -18,6 +18,14 @@ function getCtor(): SpeechRecognitionCtor | undefined {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition
 }
 
+function teardown(rec: SpeechRecognitionLike | null) {
+  if (!rec) return
+  rec.onresult = null
+  rec.onerror = null
+  rec.onend = null
+  rec.stop()
+}
+
 export function useSpeech() {
   const [listening, setListening] = useState(false)
   const [transcript, setTranscript] = useState('')
@@ -32,6 +40,7 @@ export function useSpeech() {
       setError('unsupported')
       return
     }
+    teardown(recRef.current)
     const rec = new Ctor()
     rec.continuous = true
     rec.interimResults = true
@@ -57,6 +66,9 @@ export function useSpeech() {
     recRef.current?.stop()
     setListening(false)
   }, [])
+
+  // release the microphone and detach handlers if unmounted mid-listen
+  useEffect(() => () => teardown(recRef.current), [])
 
   return { supported, listening, transcript, error, start, stop }
 }
