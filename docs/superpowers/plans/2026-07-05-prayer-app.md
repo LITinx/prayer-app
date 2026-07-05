@@ -1697,7 +1697,7 @@ function NavItem({ icon, label, active, onClick }: { icon: string; label: string
         active ? 'text-[oklch(0.55_0.13_252)]' : 'text-[oklch(0.68_0.02_250)]'
       }`}
     >
-      <span className="text-[19px] leading-none">{icon}</span>
+      <span className="text-[19px] leading-none">{icon}</span>{' '}
       <span className="text-[9.5px] font-bold">{label}</span>
     </button>
   )
