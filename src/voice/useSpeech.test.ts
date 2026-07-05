@@ -14,7 +14,7 @@ class FakeRec {
 }
 
 afterEach(() => {
-  delete (window as Record<string, unknown>).SpeechRecognition
+  delete (window as unknown as Record<string, unknown>).SpeechRecognition
   FakeRec.instance = null
 })
 
@@ -25,7 +25,7 @@ describe('useSpeech', () => {
   })
 
   it('accumulates transcript from results and stops cleanly', () => {
-    ;(window as Record<string, unknown>).SpeechRecognition = FakeRec
+    ;(window as unknown as Record<string, unknown>).SpeechRecognition = FakeRec
     const { result } = renderHook(() => useSpeech())
     expect(result.current.supported).toBe(true)
 
@@ -42,7 +42,7 @@ describe('useSpeech', () => {
   })
 
   it('surfaces errors and stops listening', () => {
-    ;(window as Record<string, unknown>).SpeechRecognition = FakeRec
+    ;(window as unknown as Record<string, unknown>).SpeechRecognition = FakeRec
     const { result } = renderHook(() => useSpeech())
     act(() => result.current.start())
     act(() => { FakeRec.instance!.onerror!({ error: 'not-allowed' }) })
@@ -51,7 +51,7 @@ describe('useSpeech', () => {
   })
 
   it('stops the recognizer and detaches handlers on unmount', () => {
-    ;(window as Record<string, unknown>).SpeechRecognition = FakeRec
+    ;(window as unknown as Record<string, unknown>).SpeechRecognition = FakeRec
     const { result, unmount } = renderHook(() => useSpeech())
     act(() => result.current.start())
     const rec = FakeRec.instance!
@@ -62,7 +62,7 @@ describe('useSpeech', () => {
   })
 
   it('starting again stops the previous session first', () => {
-    ;(window as Record<string, unknown>).SpeechRecognition = FakeRec
+    ;(window as unknown as Record<string, unknown>).SpeechRecognition = FakeRec
     const { result } = renderHook(() => useSpeech())
     act(() => result.current.start())
     const first = FakeRec.instance!
