@@ -976,7 +976,7 @@ export function reducer(state: AppState, action: Action): AppState {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- src/store/reducer.test.ts`
-Expected: PASS (13 tests).
+Expected: PASS (15 tests).
 
 - [ ] **Step 5: Commit**
 
@@ -1111,7 +1111,7 @@ describe('Home', () => {
 
   it('marking answered removes the row and updates the count', async () => {
     ui()
-    await userEvent.click(screen.getAllByRole('button', { name: 'Answered' })[0])
+    await userEvent.click(screen.getByRole('button', { name: /Mark .*Grandma Ruth.* as answered/ }))
     expect(screen.queryByText(/Grandma Ruth's recovery/)).not.toBeInTheDocument()
     expect(screen.getByText('4 Active')).toBeInTheDocument()
   })
@@ -1212,6 +1212,7 @@ export function PrayerRow({ prayer, first }: { prayer: Prayer; first: boolean })
         </div>
       </div>
       <button
+        aria-label={`Mark "${prayer.text}" as answered`}
         onClick={() => dispatch({ type: 'MARK_ANSWERED', id: prayer.id, now: Date.now() })}
         className="flex-none text-[9.5px] font-bold tracking-[.07em] uppercase text-[oklch(0.5_0.1_155)] border border-[oklch(0.82_0.06_155)] px-[9px] py-1.5 rounded whitespace-nowrap"
       >
@@ -1539,7 +1540,11 @@ export function GroupDetail() {
   const { state, dispatch } = useStore()
   const group = state.groups.find(g => g.id === state.activeGroupId)
   if (!group) return null
-  const feed = state.feeds[group.id] ?? state.feeds.g1 ?? []
+  // Groups without their own seeded feed share g1's demo feed (mockup behavior).
+  // Dispatching against the effective feed's group id keeps Pray toggles working
+  // instead of writing an empty feeds[g2] that would shadow the fallback.
+  const feedGroupId = state.feeds[group.id]?.length ? group.id : 'g1'
+  const feed = state.feeds[feedGroupId] ?? []
   return (
     <div className="px-5 pt-1.5 pb-[130px]">
       <button
@@ -1571,7 +1576,7 @@ export function GroupDetail() {
 
       <div className="text-sm font-bold text-[oklch(0.3_0.03_255)] mb-3">Shared requests</div>
       {feed.map(f => (
-        <FeedCard key={f.id} item={f} groupId={group.id} />
+        <FeedCard key={f.id} item={f} groupId={feedGroupId} />
       ))}
     </div>
   )
