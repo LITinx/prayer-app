@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Category } from '../store/types'
 import { useStore } from '../store/StoreContext'
 import { CATEGORIES, catColor } from '../store/categories'
@@ -20,13 +20,11 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
   const [text, setText] = useState('')
   const [category, setCategory] = useState<Category>('Guidance')
   const [picked, setPicked] = useState(false)
-  const startedRef = useRef(false)
 
-  // start listening once on mount (guarded for StrictMode double-invoke)
+  // start listening on mount; cleanup stops the mic (StrictMode remount restarts it)
   useEffect(() => {
-    if (startedRef.current) return
-    startedRef.current = true
     if (speech.supported) speech.start()
+    return () => speech.stop()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -43,6 +41,14 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (!picked) setCategory(categorize(text))
   }, [text, picked])
+
+  // Escape dismisses the sheet
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function finishListening() {
     speech.stop()
@@ -65,7 +71,12 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 mx-auto max-w-[430px] bg-[oklch(0.22_0.05_258_/_.55)] backdrop-blur-[6px] flex items-end animate-fade-up">
       <button aria-label="Close" onClick={close} className="absolute inset-0 cursor-default" />
-      <div className="relative w-full bg-[oklch(0.99_0.006_235)] rounded-t-[32px] px-[22px] pt-[22px] pb-[max(30px,env(safe-area-inset-bottom))] shadow-[0_-20px_60px_oklch(0.3_0.08_258_/_.4)] animate-fade-up">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add a prayer request"
+        className="relative w-full bg-[oklch(0.99_0.006_235)] rounded-t-[32px] px-[22px] pt-[22px] pb-[max(30px,env(safe-area-inset-bottom))] shadow-[0_-20px_60px_oklch(0.3_0.08_258_/_.4)] animate-fade-up"
+      >
         <div className="w-10 h-1 rounded bg-[oklch(0.86_0.02_245)] mx-auto mb-5" />
 
         {stage === 'listening' ? (
@@ -73,7 +84,7 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
             <div className="text-center text-[13px] font-bold text-[oklch(0.58_0.1_248)] tracking-[.03em] mb-1.5">
               LISTENING…
             </div>
-            <div className="text-center text-base text-[oklch(0.35_0.03_255)] min-h-12 leading-[1.4] px-1.5">
+            <div aria-live="polite" className="text-center text-base text-[oklch(0.35_0.03_255)] min-h-12 leading-[1.4] px-1.5">
               {speech.transcript}
               <span className="animate-caret text-[oklch(0.6_0.12_248)] font-bold">|</span>
             </div>

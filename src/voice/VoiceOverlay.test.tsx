@@ -53,6 +53,14 @@ describe('VoiceOverlay — typed fallback (no speech support)', () => {
     await userEvent.type(screen.getByPlaceholderText('What would you like to pray for?'), ' my friend')
     expect(screen.getByRole('button', { name: /Church/, pressed: true })).toBeInTheDocument()
   })
+
+  it('Escape closes the sheet', async () => {
+    render(<App />)
+    await userEvent.click(screen.getByRole('button', { name: 'Add prayer by voice' }))
+    expect(screen.getByRole('dialog', { name: 'Add a prayer request' })).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByText('NEW PRAYER REQUEST')).not.toBeInTheDocument()
+  })
 })
 
 describe('VoiceOverlay — listening flow', () => {
