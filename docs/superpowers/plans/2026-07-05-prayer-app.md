@@ -1857,6 +1857,28 @@ describe('useSpeech', () => {
     expect(result.current.error).toBe('not-allowed')
     expect(result.current.listening).toBe(false)
   })
+
+  it('stops the recognizer and detaches handlers on unmount', () => {
+    ;(window as Record<string, unknown>).SpeechRecognition = FakeRec
+    const { result, unmount } = renderHook(() => useSpeech())
+    act(() => result.current.start())
+    const rec = FakeRec.instance!
+    const stopSpy = vi.spyOn(rec, 'stop')
+    unmount()
+    expect(stopSpy).toHaveBeenCalled()
+    expect(rec.onresult).toBeNull()
+  })
+
+  it('starting again stops the previous session first', () => {
+    ;(window as Record<string, unknown>).SpeechRecognition = FakeRec
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.start())
+    const first = FakeRec.instance!
+    const stopSpy = vi.spyOn(first, 'stop')
+    act(() => result.current.start())
+    expect(stopSpy).toHaveBeenCalled()
+    expect(first.onresult).toBeNull()
+  })
 })
 ```
 
@@ -1868,7 +1890,7 @@ Expected: FAIL — cannot resolve `./useSpeech`.
 - [ ] **Step 3: Create src/voice/useSpeech.ts**
 
 ```ts
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface SpeechRecognitionLike {
   continuous: boolean
@@ -1888,6 +1910,14 @@ function getCtor(): SpeechRecognitionCtor | undefined {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition
 }
 
+function teardown(rec: SpeechRecognitionLike | null) {
+  if (!rec) return
+  rec.onresult = null
+  rec.onerror = null
+  rec.onend = null
+  rec.stop()
+}
+
 export function useSpeech() {
   const [listening, setListening] = useState(false)
   const [transcript, setTranscript] = useState('')
@@ -1902,6 +1932,7 @@ export function useSpeech() {
       setError('unsupported')
       return
     }
+    teardown(recRef.current)
     const rec = new Ctor()
     rec.continuous = true
     rec.interimResults = true
@@ -1928,6 +1959,9 @@ export function useSpeech() {
     setListening(false)
   }, [])
 
+  // release the microphone and detach handlers if unmounted mid-listen
+  useEffect(() => () => teardown(recRef.current), [])
+
   return { supported, listening, transcript, error, start, stop }
 }
 ```
@@ -1935,7 +1969,7 @@ export function useSpeech() {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- src/voice/useSpeech.test.ts`
-Expected: PASS (3 tests).
+Expected: PASS (5 tests).
 
 - [ ] **Step 5: Commit**
 
