@@ -30,14 +30,22 @@ export function Home() {
           {state.prayers.length} Active
         </div>
       </div>
-      <div className="flex justify-end pt-2.5 pb-1">
-        <SortToggle value={sort} onChange={setSort} />
-      </div>
-      <div className="border-y border-[oklch(0.84_0.025_245)]">
-        {prayers.map((p, i) => (
-          <PrayerRow key={p.id} prayer={p} first={i === 0} />
-        ))}
-      </div>
+      {prayers.length === 0 ? (
+        <p className="pt-7 text-center text-[13.5px] text-[oklch(0.55_0.03_250)]">
+          No prayers yet — tap the mic to add one 🎙️
+        </p>
+      ) : (
+        <>
+          <div className="flex justify-end pt-2.5 pb-1">
+            <SortToggle value={sort} onChange={setSort} />
+          </div>
+          <div className="border-y border-[oklch(0.84_0.025_245)]">
+            {prayers.map((p, i) => (
+              <PrayerRow key={p.id} prayer={p} first={i === 0} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }

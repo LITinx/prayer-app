@@ -54,6 +54,13 @@ describe('Home', () => {
     expect(rowTexts()[0]).toBe("Grandma Ruth's recovery after her surgery")
   })
 
+  it('shows an empty state when there are no prayers', () => {
+    localStorage.clear() // fresh seed, no fixture
+    ui()
+    expect(screen.getByText(/No prayers yet — tap the mic to add one/)).toBeInTheDocument()
+    expect(screen.getByText('0 Active')).toBeInTheDocument()
+  })
+
   it('shows streak chip only for prayers with streak > 0', () => {
     ui()
     expect(screen.getByText('· 12D')).toBeInTheDocument()
