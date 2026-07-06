@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { StoreProvider, useStore } from './StoreContext'
-import { STORAGE_KEY } from './persistence'
+import { STORAGE_KEY, saveState } from './persistence'
+import { demoState } from '../test/fixtures'
+import { todayStr } from '../lib/time'
 
 function Probe() {
   const { state, dispatch } = useStore()
@@ -13,10 +15,13 @@ function Probe() {
   )
 }
 
-beforeEach(() => localStorage.clear())
+beforeEach(() => {
+  localStorage.clear()
+  saveState(demoState(Date.now(), todayStr()))
+})
 
 describe('StoreProvider', () => {
-  it('hydrates seeded state and persists after dispatch', async () => {
+  it('hydrates stored state and persists after dispatch', async () => {
     render(<StoreProvider><Probe /></StoreProvider>)
     expect(screen.getByTestId('count')).toHaveTextContent('5')
     await userEvent.click(screen.getByText('answer'))

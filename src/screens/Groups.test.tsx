@@ -1,6 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { StoreProvider, useStore } from '../store/StoreContext'
+import { saveState } from '../store/persistence'
+import { demoState } from '../test/fixtures'
+import { todayStr } from '../lib/time'
 import { Groups } from './Groups'
 import { GroupDetail } from './GroupDetail'
 
@@ -11,10 +14,13 @@ function GroupsFlow() {
 
 const ui = () => render(<StoreProvider><GroupsFlow /></StoreProvider>)
 
-beforeEach(() => localStorage.clear())
+beforeEach(() => {
+  localStorage.clear()
+  saveState(demoState(Date.now(), todayStr()))
+})
 
 describe('Groups', () => {
-  it('lists seeded groups', () => {
+  it('lists groups', () => {
     ui()
     expect(screen.getByText('Morning Grace')).toBeInTheDocument()
     expect(screen.getByText('6 members · 8 requests')).toBeInTheDocument()
@@ -42,13 +48,5 @@ describe('Groups', () => {
     await userEvent.click(screen.getByText('Morning Grace'))
     await userEvent.click(screen.getByText('‹ Groups'))
     expect(screen.getByText('Pray together, in one place')).toBeInTheDocument()
-  })
-
-  it('groups without their own feed share g1 demo feed and toggles still work', async () => {
-    ui()
-    await userEvent.click(screen.getByText('College Friends'))
-    expect(screen.getByText(/Traveling mercies/)).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: /Pray · 12/ }))
-    expect(screen.getByRole('button', { name: /🙏 Praying · 13/ })).toBeInTheDocument()
   })
 })

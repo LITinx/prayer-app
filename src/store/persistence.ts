@@ -2,31 +2,17 @@ import type { AppState } from './types'
 
 export const STORAGE_KEY = 'prayer-app-state-v1'
 
-const DAY = 86_400_000
-
-export function seedState(now: number, today: string): AppState {
+export function seedState(_now: number, today: string): AppState {
   return {
     screen: 'home',
     activeGroupId: null,
     lastVisitDate: today,
-    appStreak: { count: 7, lastPrayedDate: today },
+    appStreak: { count: 0, lastPrayedDate: today },
     profile: { name: 'Anna', initials: 'AR' },
-    prayers: [
-      { id: 'p1', text: "Grandma Ruth's recovery after her surgery", category: 'Health', streak: 6, prayedToday: false },
-      { id: 'p2', text: 'Wisdom for the job decision this month', category: 'Guidance', streak: 3, prayedToday: false },
-      { id: 'p3', text: "Thankful for Maya's safe arrival 💙", category: 'Gratitude', streak: 12, prayedToday: true },
-      { id: 'p4', text: "Tom & Elise's marriage — patience and grace", category: 'Family', streak: 0, prayedToday: false },
-      { id: 'p5', text: "Sarah's visa application to come through", category: 'Provision', streak: 2, prayedToday: false },
-    ],
-    answered: [
-      { id: 'a1', text: "Dad's test results came back clear", category: 'Health', answeredAt: now - 3 * DAY },
-      { id: 'a2', text: 'The new apartment finally came through', category: 'Provision', answeredAt: now - 8 * DAY },
-      { id: 'a3', text: 'Reconciled with my brother after years', category: 'Family', answeredAt: now - 15 * DAY },
-    ],
+    prayers: [],
+    answered: [],
     groups: [
-      { id: 'g1', name: 'Morning Grace', emoji: '🌅', members: 6, requests: 8, prayingNow: 4, avatars: ['JM', 'SK', 'DL', 'RP'] },
-      { id: 'g2', name: 'College Friends', emoji: '🎓', members: 9, requests: 5, prayingNow: 2, avatars: ['AR', 'TK', 'LM'] },
-      { id: 'g3', name: 'Riverside Small Group', emoji: '🌊', members: 12, requests: 11, prayingNow: 6, avatars: ['NB', 'CV', 'EM', 'FG'] },
+      { id: 'g1', name: 'Morning Grace', emoji: '🌅', members: 6, requests: 3, prayingNow: 4, avatars: ['JM', 'SK', 'DL', 'RP'] },
     ],
     feeds: {
       g1: [

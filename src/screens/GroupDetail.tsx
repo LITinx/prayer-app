@@ -34,11 +34,7 @@ export function GroupDetail() {
   const { state, dispatch } = useStore()
   const group = state.groups.find(g => g.id === state.activeGroupId)
   if (!group) return null
-  // Groups without their own seeded feed share g1's demo feed (mockup behavior).
-  // Dispatching against the effective feed's group id keeps Pray toggles working
-  // instead of writing an empty feeds[g2] that would shadow the fallback.
-  const feedGroupId = state.feeds[group.id]?.length ? group.id : 'g1'
-  const feed = state.feeds[feedGroupId] ?? []
+  const feed = state.feeds[group.id] ?? []
   return (
     <div className="px-5 pt-1.5 pb-[130px]">
       <button
@@ -70,7 +66,7 @@ export function GroupDetail() {
 
       <div className="text-sm font-bold text-[oklch(0.3_0.03_255)] mb-3">Shared requests</div>
       {feed.map(f => (
-        <FeedCard key={f.id} item={f} groupId={feedGroupId} />
+        <FeedCard key={f.id} item={f} groupId={group.id} />
       ))}
     </div>
   )

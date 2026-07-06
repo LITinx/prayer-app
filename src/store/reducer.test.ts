@@ -1,10 +1,10 @@
 import { reducer, displayStreak } from './reducer'
-import { seedState } from './persistence'
+import { demoState } from '../test/fixtures'
 
 const now = 1_780_000_000_000
 const today = '2026-07-05'
 const yesterday = '2026-07-04'
-const base = () => seedState(now, today)
+const base = () => demoState(now, today)
 
 describe('NAVIGATE / OPEN_GROUP', () => {
   it('navigates between screens', () => {
