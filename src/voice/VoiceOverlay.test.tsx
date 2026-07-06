@@ -92,4 +92,16 @@ describe('VoiceOverlay — listening flow', () => {
     act(() => { FakeRec.instance!.onerror!({ error: 'not-allowed' }) })
     expect(screen.getByText('NEW PRAYER REQUEST')).toBeInTheDocument()
   })
+
+  it('moves to review when recognition ends on its own', async () => {
+    ;(window as unknown as Record<string, unknown>).SpeechRecognition = FakeRec
+    render(<App />)
+    await userEvent.click(screen.getByRole('button', { name: 'Add prayer by voice' }))
+    act(() => {
+      FakeRec.instance!.onresult!({ results: [[{ transcript: 'Peace for today' }]] })
+    })
+    act(() => { FakeRec.instance!.onend!() })
+    expect(screen.getByText('NEW PRAYER REQUEST')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('What would you like to pray for?')).toHaveValue('Peace for today')
+  })
 })

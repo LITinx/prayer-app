@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Category } from '../store/types'
 import { useStore } from '../store/StoreContext'
 import { CATEGORIES, catColor } from '../store/categories'
@@ -20,6 +20,7 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
   const [text, setText] = useState('')
   const [category, setCategory] = useState<Category>('Guidance')
   const [picked, setPicked] = useState(false)
+  const wasListeningRef = useRef(false)
 
   // start listening on mount; cleanup stops the mic (StrictMode remount restarts it)
   useEffect(() => {
@@ -36,6 +37,18 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [speech.error])
+
+  // recognition can end on its own (e.g. prolonged silence) — move to review
+  useEffect(() => {
+    if (speech.listening) {
+      wasListeningRef.current = true
+      return
+    }
+    if (wasListeningRef.current && stage === 'listening' && !speech.error) {
+      finishListening()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [speech.listening])
 
   // auto-categorize until the user picks a chip manually
   useEffect(() => {
