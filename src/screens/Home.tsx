@@ -2,14 +2,16 @@ import { useState } from 'react'
 import { useStore } from '../store/StoreContext'
 import { StreakCard } from '../components/StreakCard'
 import { PrayerRow } from '../components/PrayerRow'
-import { SortToggle, sortItems } from '../components/SortToggle'
-import type { SortMode } from '../components/SortToggle'
+import { CategoryFilter, presentCategories, filterByCategories } from '../components/CategoryFilter'
+import type { Category } from '../store/types'
 import { greeting, dateLine } from '../lib/time'
 
 export function Home() {
   const { state } = useStore()
-  const [sort, setSort] = useState<SortMode>('recent')
-  const prayers = sortItems(state.prayers, sort)
+  const [selectedCats, setSelectedCats] = useState<Category[]>([])
+  const toggleCat = (c: Category) =>
+    setSelectedCats(s => (s.includes(c) ? s.filter(x => x !== c) : [...s, c]))
+  const prayers = filterByCategories(state.prayers, selectedCats)
   return (
     <div className="px-5 pt-1.5 pb-[130px]">
       <div className="flex justify-between items-start mb-5">
@@ -30,14 +32,14 @@ export function Home() {
           {state.prayers.length} Active
         </div>
       </div>
-      {prayers.length === 0 ? (
+      {state.prayers.length === 0 ? (
         <p className="pt-7 text-center text-[13.5px] text-[oklch(0.55_0.03_250)]">
           No prayers yet — tap the mic to add one 🎙️
         </p>
       ) : (
         <>
-          <div className="flex justify-end pt-2.5 pb-1">
-            <SortToggle value={sort} onChange={setSort} />
+          <div className="pt-2.5 pb-1">
+            <CategoryFilter categories={presentCategories(state.prayers)} selected={selectedCats} onToggle={toggleCat} />
           </div>
           <div className="border-y border-[oklch(0.84_0.025_245)]">
             {prayers.map((p, i) => (

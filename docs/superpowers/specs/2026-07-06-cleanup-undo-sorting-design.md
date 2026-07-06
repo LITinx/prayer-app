@@ -1,6 +1,6 @@
-# Cleanup, Undo & Category Sorting — Design
+# Cleanup, Undo & Category Filtering — Design
 
-**Date:** 2026-07-06
+**Date:** 2026-07-06 (revised 2026-07-07: sorting → filtering)
 **Status:** Approved
 
 ## Goal
@@ -9,7 +9,7 @@ Three refinements to the Prayer App PWA:
 
 1. Remove mock seed data, keeping a single demo group.
 2. Add an Undo button to the Answered screen that returns a prayer to the active list.
-3. Add a Recent/Category sort toggle to the Prayer List (Home), Answered, and Group Detail feed.
+3. Add multi-select category filter chips to the Prayer List (Home), Answered, and Group Detail feed.
 
 ## 1. Mock data removal
 
@@ -42,20 +42,23 @@ Entries persisted before this change have no `streak`; they restore at 0 via the
 
 **UI** (`src/screens/Answered.tsx`): each answered card gets an "Undo" button at the card's top-right that dispatches `UNDO_ANSWERED`.
 
-## 3. Category sorting
+## 3. Category filtering
 
-**Shared component** `src/components/SortToggle.tsx`: a two-option segmented control, **Recent | Category**, props `{ value: 'recent' | 'category', onChange }`. Styled to match the existing oklch design language.
+**Shared component** `src/components/CategoryFilter.tsx`: a horizontally scrollable row of category chips, multi-select. Props `{ categories: Category[], selected: Category[], onToggle: (c: Category) => void }`. Chips reuse the `catColor` palette from `CategoryTag`; selected chips render filled, unselected muted. Each chip exposes `aria-pressed`.
 
 **Behavior:**
 
-- Sort mode is per-screen local `useState`, default `'recent'` (the current order). Not persisted — it is view preference, not app state.
-- Category sort orders items alphabetically by category name; ties keep their original relative order (stable sort over a copy — never mutate store arrays).
+- The row shows only categories present in the current list, alphabetically.
+- Empty selection = no filter (all items shown). Tapping a chip toggles it; several can be active at once (union of categories).
+- Selection is per-screen local `useState`, default `[]`. Not persisted — view preference, not app state.
+- Filtering never reorders; list order is untouched.
+- The row is hidden when the underlying list is empty.
 
 **Placement:**
 
-- **Home:** below the "Prayer List" heading row, sorts `state.prayers`.
-- **Answered:** below the gratitude banner, sorts `state.answered`.
-- **Group Detail:** next to the "Shared requests" heading, sorts the feed. (Groups themselves have no category — sorting applies to the categorized feed items.)
+- **Home:** below the "Prayer List" heading row, filters `state.prayers`.
+- **Answered:** below the gratitude banner, filters `state.answered`.
+- **Group Detail:** below the "Shared requests" heading, filters the feed. (Groups themselves have no category — filtering applies to the categorized feed items.)
 
 ## Testing
 
@@ -63,10 +66,10 @@ Vitest + Testing Library, following existing patterns:
 
 - Reducer: `MARK_ANSWERED` stores streak; `UNDO_ANSWERED` restores prayer with streak, handles missing `streak` (→ 0) and unknown id (no-op).
 - Persistence: seed-state tests updated for empty lists / single group.
-- Screens: Answered shows Undo and dispatches correctly; sort toggle reorders items by category on Home, Answered, and GroupDetail; Home empty state renders.
+- Screens: Answered shows Undo and dispatches correctly; category chips filter items (single and multiple selections, toggle off restores all) on Home, Answered, and GroupDetail; Home empty state renders.
 
 ## Out of scope
 
 - Onboarding / profile editing.
-- Persisting sort preference.
-- Sorting the Groups list itself (no category on groups; only one group remains).
+- Persisting filter preference.
+- Filtering the Groups list itself (no category on groups; only one group remains).

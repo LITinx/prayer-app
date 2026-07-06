@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import type { FeedItem } from '../store/types'
+import type { Category, FeedItem } from '../store/types'
 import { useStore } from '../store/StoreContext'
 import { CategoryTag } from '../components/CategoryTag'
-import { SortToggle, sortItems } from '../components/SortToggle'
-import type { SortMode } from '../components/SortToggle'
+import { CategoryFilter, presentCategories, filterByCategories } from '../components/CategoryFilter'
 import { Avatar } from '../components/Avatar'
 
 function FeedCard({ item, groupId }: { item: FeedItem; groupId: string }) {
@@ -35,10 +34,13 @@ function FeedCard({ item, groupId }: { item: FeedItem; groupId: string }) {
 
 export function GroupDetail() {
   const { state, dispatch } = useStore()
-  const [sort, setSort] = useState<SortMode>('recent')
+  const [selectedCats, setSelectedCats] = useState<Category[]>([])
+  const toggleCat = (c: Category) =>
+    setSelectedCats(s => (s.includes(c) ? s.filter(x => x !== c) : [...s, c]))
   const group = state.groups.find(g => g.id === state.activeGroupId)
   if (!group) return null
-  const feed = sortItems(state.feeds[group.id] ?? [], sort)
+  const fullFeed = state.feeds[group.id] ?? []
+  const feed = filterByCategories(fullFeed, selectedCats)
   return (
     <div className="px-5 pt-1.5 pb-[130px]">
       <button
@@ -68,9 +70,9 @@ export function GroupDetail() {
         </button>
       </div>
 
-      <div className="flex items-center justify-between mb-3">
-        <div className="text-sm font-bold text-[oklch(0.3_0.03_255)]">Shared requests</div>
-        <SortToggle value={sort} onChange={setSort} />
+      <div className="text-sm font-bold text-[oklch(0.3_0.03_255)] mb-2">Shared requests</div>
+      <div className="mb-3">
+        <CategoryFilter categories={presentCategories(fullFeed)} selected={selectedCats} onToggle={toggleCat} />
       </div>
       {feed.map(f => (
         <FeedCard key={f.id} item={f} groupId={group.id} />

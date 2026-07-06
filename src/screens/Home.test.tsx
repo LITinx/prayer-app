@@ -36,22 +36,32 @@ describe('Home', () => {
     expect(screen.getByText('4 Active')).toBeInTheDocument()
   })
 
-  it('sorts prayers by category and back to recent', async () => {
+  it('filters prayers by selected categories and back to all', async () => {
     ui()
     const rowTexts = () =>
       screen.getAllByText(/Grandma Ruth's|Wisdom for|Maya's safe|Tom & Elise|Sarah's visa/).map(e => e.textContent)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Category' }))
+    // single category
+    await userEvent.click(screen.getByRole('button', { name: 'Health' }))
+    expect(rowTexts()).toEqual(["Grandma Ruth's recovery after her surgery"])
+
+    // multi-select adds a second category, original order kept
+    await userEvent.click(screen.getByRole('button', { name: 'Guidance' }))
     expect(rowTexts()).toEqual([
-      "Tom & Elise's marriage — patience and grace", // Family
-      "Thankful for Maya's safe arrival 💙", // Gratitude
-      'Wisdom for the job decision this month', // Guidance
-      "Grandma Ruth's recovery after her surgery", // Health
-      "Sarah's visa application to come through", // Provision
+      "Grandma Ruth's recovery after her surgery",
+      'Wisdom for the job decision this month',
     ])
 
-    await userEvent.click(screen.getByRole('button', { name: 'Recent' }))
-    expect(rowTexts()[0]).toBe("Grandma Ruth's recovery after her surgery")
+    // toggling both off shows everything again
+    await userEvent.click(screen.getByRole('button', { name: 'Health' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Guidance' }))
+    expect(rowTexts()).toHaveLength(5)
+  })
+
+  it('only offers chips for categories present in the list', () => {
+    ui()
+    expect(screen.getByRole('button', { name: 'Provision' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Church' })).not.toBeInTheDocument()
   })
 
   it('shows an empty state when there are no prayers', () => {

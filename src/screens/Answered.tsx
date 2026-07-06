@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { useStore } from '../store/StoreContext'
 import { CategoryTag } from '../components/CategoryTag'
-import { SortToggle, sortItems } from '../components/SortToggle'
-import type { SortMode } from '../components/SortToggle'
+import { CategoryFilter, presentCategories, filterByCategories } from '../components/CategoryFilter'
+import type { Category } from '../store/types'
 import { relTime } from '../lib/time'
 
 export function Answered() {
   const { state, dispatch } = useStore()
-  const [sort, setSort] = useState<SortMode>('recent')
-  const answered = sortItems(state.answered, sort)
+  const [selectedCats, setSelectedCats] = useState<Category[]>([])
+  const toggleCat = (c: Category) =>
+    setSelectedCats(s => (s.includes(c) ? s.filter(x => x !== c) : [...s, c]))
+  const answered = filterByCategories(state.answered, selectedCats)
   const now = Date.now()
   return (
     <div className="px-5 pt-1.5 pb-[130px]">
@@ -23,8 +25,8 @@ export function Answered() {
         </div>
       </div>
 
-      <div className="flex justify-end mb-3">
-        <SortToggle value={sort} onChange={setSort} />
+      <div className="mb-3">
+        <CategoryFilter categories={presentCategories(state.answered)} selected={selectedCats} onToggle={toggleCat} />
       </div>
 
       {answered.map(a => (
