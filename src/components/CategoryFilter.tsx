@@ -6,9 +6,14 @@ export function presentCategories<T extends { category: Category }>(items: T[]):
   return [...new Set(items.map(i => i.category))].sort((a, b) => a.localeCompare(b))
 }
 
-/** Empty selection = no filter. Never reorders. */
+/**
+ * Empty selection = no filter. Never reorders. Selected categories no longer
+ * present in the list are ignored, so a filter can't strand the user on an
+ * unexplained empty list when its last item moves away.
+ */
 export function filterByCategories<T extends { category: Category }>(items: T[], selected: Category[]): T[] {
-  return selected.length ? items.filter(i => selected.includes(i.category)) : items
+  const active = selected.filter(c => items.some(i => i.category === c))
+  return active.length ? items.filter(i => active.includes(i.category)) : items
 }
 
 export function CategoryFilter({

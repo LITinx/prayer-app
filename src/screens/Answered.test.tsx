@@ -34,6 +34,15 @@ describe('Answered', () => {
     expect(cardTexts()).toHaveLength(3)
   })
 
+  it('ignores a selected filter whose category disappears from the list', async () => {
+    render(<StoreProvider><Answered /></StoreProvider>)
+    await userEvent.click(screen.getByRole('button', { name: 'Family' }))
+    // undo the only Family entry while the Family filter is active
+    await userEvent.click(screen.getByRole('button', { name: /Undo .*Reconciled/ }))
+    expect(screen.getByText(/Dad's test results came back clear/)).toBeInTheDocument()
+    expect(screen.getByText(/The new apartment finally came through/)).toBeInTheDocument()
+  })
+
   it('undo returns the prayer to the active list', async () => {
     render(<StoreProvider><Answered /></StoreProvider>)
     await userEvent.click(screen.getByRole('button', { name: /Undo .*Dad's test results/ }))
