@@ -27,7 +27,11 @@ export function CategoryFilter({
 }) {
   if (categories.length === 0) return null
   return (
-    <div className="flex gap-1.5 overflow-x-auto -mx-5 px-5 py-1" role="group" aria-label="Filter by category">
+    <div
+      className="flex gap-1.5 overflow-x-auto -mx-5 px-5 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      role="group"
+      aria-label="Filter by category"
+    >
       {categories.map(c => {
         const col = catColor(c)
         const active = selected.includes(c)
