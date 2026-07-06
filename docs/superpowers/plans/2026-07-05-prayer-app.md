@@ -976,7 +976,7 @@ export function reducer(state: AppState, action: Action): AppState {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- src/store/reducer.test.ts`
-Expected: PASS (13 tests).
+Expected: PASS (15 tests).
 
 - [ ] **Step 5: Commit**
 
@@ -1111,7 +1111,7 @@ describe('Home', () => {
 
   it('marking answered removes the row and updates the count', async () => {
     ui()
-    await userEvent.click(screen.getAllByRole('button', { name: 'Answered' })[0])
+    await userEvent.click(screen.getByRole('button', { name: /Mark .*Grandma Ruth.* as answered/ }))
     expect(screen.queryByText(/Grandma Ruth's recovery/)).not.toBeInTheDocument()
     expect(screen.getByText('4 Active')).toBeInTheDocument()
   })
@@ -1212,6 +1212,7 @@ export function PrayerRow({ prayer, first }: { prayer: Prayer; first: boolean })
         </div>
       </div>
       <button
+        aria-label={`Mark "${prayer.text}" as answered`}
         onClick={() => dispatch({ type: 'MARK_ANSWERED', id: prayer.id, now: Date.now() })}
         className="flex-none text-[9.5px] font-bold tracking-[.07em] uppercase text-[oklch(0.5_0.1_155)] border border-[oklch(0.82_0.06_155)] px-[9px] py-1.5 rounded whitespace-nowrap"
       >
@@ -1539,7 +1540,11 @@ export function GroupDetail() {
   const { state, dispatch } = useStore()
   const group = state.groups.find(g => g.id === state.activeGroupId)
   if (!group) return null
-  const feed = state.feeds[group.id] ?? state.feeds.g1 ?? []
+  // Groups without their own seeded feed share g1's demo feed (mockup behavior).
+  // Dispatching against the effective feed's group id keeps Pray toggles working
+  // instead of writing an empty feeds[g2] that would shadow the fallback.
+  const feedGroupId = state.feeds[group.id]?.length ? group.id : 'g1'
+  const feed = state.feeds[feedGroupId] ?? []
   return (
     <div className="px-5 pt-1.5 pb-[130px]">
       <button
@@ -1571,7 +1576,7 @@ export function GroupDetail() {
 
       <div className="text-sm font-bold text-[oklch(0.3_0.03_255)] mb-3">Shared requests</div>
       {feed.map(f => (
-        <FeedCard key={f.id} item={f} groupId={group.id} />
+        <FeedCard key={f.id} item={f} groupId={feedGroupId} />
       ))}
     </div>
   )
@@ -1688,11 +1693,12 @@ function NavItem({ icon, label, active, onClick }: { icon: string; label: string
   return (
     <button
       onClick={onClick}
+      aria-current={active ? 'page' : undefined}
       className={`flex flex-col items-center gap-[3px] transition-colors ${
         active ? 'text-[oklch(0.55_0.13_252)]' : 'text-[oklch(0.68_0.02_250)]'
       }`}
     >
-      <span className="text-[19px] leading-none">{icon}</span>
+      <span className="text-[19px] leading-none">{icon}</span>{' '}
       <span className="text-[9.5px] font-bold">{label}</span>
     </button>
   )
@@ -1816,7 +1822,7 @@ class FakeRec {
 }
 
 afterEach(() => {
-  delete (window as Record<string, unknown>).SpeechRecognition
+  delete (window as unknown as Record<string, unknown>).SpeechRecognition
   FakeRec.instance = null
 })
 
@@ -1827,7 +1833,7 @@ describe('useSpeech', () => {
   })
 
   it('accumulates transcript from results and stops cleanly', () => {
-    ;(window as Record<string, unknown>).SpeechRecognition = FakeRec
+    ;(window as unknown as Record<string, unknown>).SpeechRecognition = FakeRec
     const { result } = renderHook(() => useSpeech())
     expect(result.current.supported).toBe(true)
 
@@ -1844,12 +1850,34 @@ describe('useSpeech', () => {
   })
 
   it('surfaces errors and stops listening', () => {
-    ;(window as Record<string, unknown>).SpeechRecognition = FakeRec
+    ;(window as unknown as Record<string, unknown>).SpeechRecognition = FakeRec
     const { result } = renderHook(() => useSpeech())
     act(() => result.current.start())
     act(() => { FakeRec.instance!.onerror!({ error: 'not-allowed' }) })
     expect(result.current.error).toBe('not-allowed')
     expect(result.current.listening).toBe(false)
+  })
+
+  it('stops the recognizer and detaches handlers on unmount', () => {
+    ;(window as unknown as Record<string, unknown>).SpeechRecognition = FakeRec
+    const { result, unmount } = renderHook(() => useSpeech())
+    act(() => result.current.start())
+    const rec = FakeRec.instance!
+    const stopSpy = vi.spyOn(rec, 'stop')
+    unmount()
+    expect(stopSpy).toHaveBeenCalled()
+    expect(rec.onresult).toBeNull()
+  })
+
+  it('starting again stops the previous session first', () => {
+    ;(window as unknown as Record<string, unknown>).SpeechRecognition = FakeRec
+    const { result } = renderHook(() => useSpeech())
+    act(() => result.current.start())
+    const first = FakeRec.instance!
+    const stopSpy = vi.spyOn(first, 'stop')
+    act(() => result.current.start())
+    expect(stopSpy).toHaveBeenCalled()
+    expect(first.onresult).toBeNull()
   })
 })
 ```
@@ -1862,7 +1890,7 @@ Expected: FAIL — cannot resolve `./useSpeech`.
 - [ ] **Step 3: Create src/voice/useSpeech.ts**
 
 ```ts
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface SpeechRecognitionLike {
   continuous: boolean
@@ -1882,6 +1910,14 @@ function getCtor(): SpeechRecognitionCtor | undefined {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition
 }
 
+function teardown(rec: SpeechRecognitionLike | null) {
+  if (!rec) return
+  rec.onresult = null
+  rec.onerror = null
+  rec.onend = null
+  rec.stop()
+}
+
 export function useSpeech() {
   const [listening, setListening] = useState(false)
   const [transcript, setTranscript] = useState('')
@@ -1896,6 +1932,7 @@ export function useSpeech() {
       setError('unsupported')
       return
     }
+    teardown(recRef.current)
     const rec = new Ctor()
     rec.continuous = true
     rec.interimResults = true
@@ -1922,6 +1959,9 @@ export function useSpeech() {
     setListening(false)
   }, [])
 
+  // release the microphone and detach handlers if unmounted mid-listen
+  useEffect(() => () => teardown(recRef.current), [])
+
   return { supported, listening, transcript, error, start, stop }
 }
 ```
@@ -1929,7 +1969,7 @@ export function useSpeech() {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- src/voice/useSpeech.test.ts`
-Expected: PASS (3 tests).
+Expected: PASS (5 tests).
 
 - [ ] **Step 5: Commit**
 
@@ -1967,7 +2007,7 @@ class FakeRec {
 
 beforeEach(() => localStorage.clear())
 afterEach(() => {
-  delete (window as Record<string, unknown>).SpeechRecognition
+  delete (window as unknown as Record<string, unknown>).SpeechRecognition
   FakeRec.instance = null
 })
 
@@ -2004,11 +2044,19 @@ describe('VoiceOverlay — typed fallback (no speech support)', () => {
     await userEvent.type(screen.getByPlaceholderText('What would you like to pray for?'), ' my friend')
     expect(screen.getByRole('button', { name: /Church/, pressed: true })).toBeInTheDocument()
   })
+
+  it('Escape closes the sheet', async () => {
+    render(<App />)
+    await userEvent.click(screen.getByRole('button', { name: 'Add prayer by voice' }))
+    expect(screen.getByRole('dialog', { name: 'Add a prayer request' })).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByText('NEW PRAYER REQUEST')).not.toBeInTheDocument()
+  })
 })
 
 describe('VoiceOverlay — listening flow', () => {
   it('transcribes, reviews, and adds the prayer', async () => {
-    ;(window as Record<string, unknown>).SpeechRecognition = FakeRec
+    ;(window as unknown as Record<string, unknown>).SpeechRecognition = FakeRec
     render(<App />)
     await userEvent.click(screen.getByRole('button', { name: 'Add prayer by voice' }))
     expect(screen.getByText('LISTENING…')).toBeInTheDocument()
@@ -2029,7 +2077,7 @@ describe('VoiceOverlay — listening flow', () => {
   })
 
   it('falls back to review when the mic errors', async () => {
-    ;(window as Record<string, unknown>).SpeechRecognition = FakeRec
+    ;(window as unknown as Record<string, unknown>).SpeechRecognition = FakeRec
     render(<App />)
     await userEvent.click(screen.getByRole('button', { name: 'Add prayer by voice' }))
     act(() => { FakeRec.instance!.onerror!({ error: 'not-allowed' }) })
@@ -2046,7 +2094,7 @@ Expected: FAIL — stub overlay renders nothing.
 - [ ] **Step 3: Replace src/voice/VoiceOverlay.tsx**
 
 ```tsx
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Category } from '../store/types'
 import { useStore } from '../store/StoreContext'
 import { CATEGORIES, catColor } from '../store/categories'
@@ -2068,13 +2116,11 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
   const [text, setText] = useState('')
   const [category, setCategory] = useState<Category>('Guidance')
   const [picked, setPicked] = useState(false)
-  const startedRef = useRef(false)
 
-  // start listening once on mount (guarded for StrictMode double-invoke)
+  // start listening on mount; cleanup stops the mic (StrictMode remount restarts it)
   useEffect(() => {
-    if (startedRef.current) return
-    startedRef.current = true
     if (speech.supported) speech.start()
+    return () => speech.stop()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -2091,6 +2137,14 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (!picked) setCategory(categorize(text))
   }, [text, picked])
+
+  // Escape dismisses the sheet
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function finishListening() {
     speech.stop()
@@ -2113,7 +2167,12 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 mx-auto max-w-[430px] bg-[oklch(0.22_0.05_258_/_.55)] backdrop-blur-[6px] flex items-end animate-fade-up">
       <button aria-label="Close" onClick={close} className="absolute inset-0 cursor-default" />
-      <div className="relative w-full bg-[oklch(0.99_0.006_235)] rounded-t-[32px] px-[22px] pt-[22px] pb-[max(30px,env(safe-area-inset-bottom))] shadow-[0_-20px_60px_oklch(0.3_0.08_258_/_.4)] animate-fade-up">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add a prayer request"
+        className="relative w-full bg-[oklch(0.99_0.006_235)] rounded-t-[32px] px-[22px] pt-[22px] pb-[max(30px,env(safe-area-inset-bottom))] shadow-[0_-20px_60px_oklch(0.3_0.08_258_/_.4)] animate-fade-up"
+      >
         <div className="w-10 h-1 rounded bg-[oklch(0.86_0.02_245)] mx-auto mb-5" />
 
         {stage === 'listening' ? (
@@ -2121,7 +2180,7 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
             <div className="text-center text-[13px] font-bold text-[oklch(0.58_0.1_248)] tracking-[.03em] mb-1.5">
               LISTENING…
             </div>
-            <div className="text-center text-base text-[oklch(0.35_0.03_255)] min-h-12 leading-[1.4] px-1.5">
+            <div aria-live="polite" className="text-center text-base text-[oklch(0.35_0.03_255)] min-h-12 leading-[1.4] px-1.5">
               {speech.transcript}
               <span className="animate-caret text-[oklch(0.6_0.12_248)] font-bold">|</span>
             </div>
@@ -2209,7 +2268,7 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- src/voice/VoiceOverlay.test.tsx`
-Expected: PASS (5 tests).
+Expected: PASS (6 tests).
 
 - [ ] **Step 5: Run the full suite**
 
