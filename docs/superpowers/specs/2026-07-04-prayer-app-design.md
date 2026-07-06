@@ -21,7 +21,7 @@ A mobile-first prayer companion PWA. Users keep a personal prayer list, check of
 
 ## Architecture
 
-- **Stack:** Vite + React 18 + TypeScript + Tailwind v4 + `vite-plugin-pwa` + Vitest.
+- **Stack:** Vite + React 19 + TypeScript + Tailwind v4 + `vite-plugin-pwa` + Vitest.
 - **State:** single store via `useReducer` + React context. Persisted to localStorage on every change; hydrated on load; first launch seeds the mockup's sample data (5 active prayers, 3 answered, 3 groups, feed for group g1).
 - **Navigation:** screen switching via store state (`home | groups | groupDetail | answered | reminders`). No router.
 
