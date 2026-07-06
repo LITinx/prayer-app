@@ -26,6 +26,10 @@ export default defineConfig({
       }
     })
   ],
+  server: {
+    // allow Cloudflare quick tunnels (random subdomain per run) for phone testing
+    allowedHosts: ['.trycloudflare.com']
+  },
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
