@@ -17,6 +17,7 @@ export interface AnsweredPrayer {
   text: string
   category: Category
   answeredAt: number // epoch ms
+  streak?: number // streak at the time it was answered; absent on entries stored before undo existed
 }
 
 export interface Group {

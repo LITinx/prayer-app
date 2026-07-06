@@ -6,6 +6,7 @@ export type Action =
   | { type: 'OPEN_GROUP'; groupId: string }
   | { type: 'TOGGLE_PRAYED'; id: string; today: string }
   | { type: 'MARK_ANSWERED'; id: string; now: number }
+  | { type: 'UNDO_ANSWERED'; id: string }
   | { type: 'ADD_PRAYER'; id: string; text: string; category: Category }
   | { type: 'TOGGLE_FEED_PRAY'; groupId: string; feedId: string }
 
@@ -46,7 +47,23 @@ export function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         prayers: state.prayers.filter(x => x.id !== action.id),
-        answered: [{ id: p.id, text: p.text, category: p.category, answeredAt: action.now }, ...state.answered],
+        answered: [
+          { id: p.id, text: p.text, category: p.category, answeredAt: action.now, streak: p.streak },
+          ...state.answered,
+        ],
+      }
+    }
+
+    case 'UNDO_ANSWERED': {
+      const a = state.answered.find(x => x.id === action.id)
+      if (!a) return state
+      return {
+        ...state,
+        answered: state.answered.filter(x => x.id !== action.id),
+        prayers: [
+          { id: a.id, text: a.text, category: a.category, streak: a.streak ?? 0, prayedToday: false },
+          ...state.prayers,
+        ],
       }
     }
 

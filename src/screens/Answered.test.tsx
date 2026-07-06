@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { StoreProvider } from '../store/StoreContext'
 import { saveState } from '../store/persistence'
 import { demoState } from '../test/fixtures'
@@ -18,5 +19,12 @@ describe('Answered', () => {
     expect(screen.getByText('· answered 3 days ago')).toBeInTheDocument()
     expect(screen.getByText('· answered last week')).toBeInTheDocument()
     expect(screen.getByText('· answered 2 weeks ago')).toBeInTheDocument()
+  })
+
+  it('undo returns the prayer to the active list', async () => {
+    render(<StoreProvider><Answered /></StoreProvider>)
+    await userEvent.click(screen.getByRole('button', { name: /Undo .*Dad's test results/ }))
+    expect(screen.queryByText(/Dad's test results came back clear/)).not.toBeInTheDocument()
+    expect(screen.getByText('2 prayers answered')).toBeInTheDocument()
   })
 })

@@ -3,7 +3,7 @@ import { CategoryTag } from '../components/CategoryTag'
 import { relTime } from '../lib/time'
 
 export function Answered() {
-  const { state } = useStore()
+  const { state, dispatch } = useStore()
   const now = Date.now()
   return (
     <div className="px-5 pt-1.5 pb-[130px]">
@@ -33,6 +33,13 @@ export function Answered() {
               <span className="text-[11.5px] text-[oklch(0.6_0.02_250)]">· answered {relTime(a.answeredAt, now)}</span>
             </div>
           </div>
+          <button
+            onClick={() => dispatch({ type: 'UNDO_ANSWERED', id: a.id })}
+            aria-label={`Undo — return "${a.text}" to prayer list`}
+            className="flex-none text-[11.5px] font-bold text-[oklch(0.5_0.1_245)] bg-[oklch(0.95_0.035_248)] px-[10px] py-[6px] rounded-[5px]"
+          >
+            ↩ Undo
+          </button>
         </div>
       ))}
     </div>

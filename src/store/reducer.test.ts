@@ -55,7 +55,7 @@ describe('TOGGLE_PRAYED', () => {
 })
 
 describe('MARK_ANSWERED', () => {
-  it('moves the prayer to the top of answered with timestamp', () => {
+  it('moves the prayer to the top of answered with timestamp and streak', () => {
     const s = reducer(base(), { type: 'MARK_ANSWERED', id: 'p2', now })
     expect(s.prayers.find(p => p.id === 'p2')).toBeUndefined()
     expect(s.prayers).toHaveLength(4)
@@ -64,12 +64,44 @@ describe('MARK_ANSWERED', () => {
       text: 'Wisdom for the job decision this month',
       category: 'Guidance',
       answeredAt: now,
+      streak: 3,
     })
   })
   it('ignores unknown ids', () => {
     const s = reducer(base(), { type: 'MARK_ANSWERED', id: 'nope', now })
     expect(s.prayers).toHaveLength(5)
     expect(s.answered).toHaveLength(3)
+  })
+})
+
+describe('UNDO_ANSWERED', () => {
+  it('moves the entry back to the top of prayers with its streak', () => {
+    const s0 = reducer(base(), { type: 'MARK_ANSWERED', id: 'p2', now })
+    const s = reducer(s0, { type: 'UNDO_ANSWERED', id: 'p2' })
+    expect(s.answered.find(a => a.id === 'p2')).toBeUndefined()
+    expect(s.answered).toHaveLength(3)
+    expect(s.prayers[0]).toEqual({
+      id: 'p2',
+      text: 'Wisdom for the job decision this month',
+      category: 'Guidance',
+      streak: 3,
+      prayedToday: false,
+    })
+  })
+  it('restores streak 0 for entries answered before streaks were stored', () => {
+    const s = reducer(base(), { type: 'UNDO_ANSWERED', id: 'a1' }) // fixture entry has no streak
+    expect(s.prayers[0]).toEqual({
+      id: 'a1',
+      text: "Dad's test results came back clear",
+      category: 'Health',
+      streak: 0,
+      prayedToday: false,
+    })
+    expect(s.answered).toHaveLength(2)
+  })
+  it('ignores unknown ids', () => {
+    const s = reducer(base(), { type: 'UNDO_ANSWERED', id: 'nope' })
+    expect(s).toEqual(base())
   })
 })
 
