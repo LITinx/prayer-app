@@ -21,6 +21,20 @@ describe('Answered', () => {
     expect(screen.getByText('· answered 2 weeks ago')).toBeInTheDocument()
   })
 
+  it('sorts answered prayers by category', async () => {
+    render(<StoreProvider><Answered /></StoreProvider>)
+    const cardTexts = () =>
+      screen.getAllByText(/Dad's test results|new apartment|Reconciled with/).map(e => e.textContent)
+
+    expect(cardTexts()[0]).toBe("Dad's test results came back clear")
+    await userEvent.click(screen.getByRole('button', { name: 'Category' }))
+    expect(cardTexts()).toEqual([
+      'Reconciled with my brother after years', // Family
+      "Dad's test results came back clear", // Health
+      'The new apartment finally came through', // Provision
+    ])
+  })
+
   it('undo returns the prayer to the active list', async () => {
     render(<StoreProvider><Answered /></StoreProvider>)
     await userEvent.click(screen.getByRole('button', { name: /Undo .*Dad's test results/ }))

@@ -1,9 +1,14 @@
+import { useState } from 'react'
 import { useStore } from '../store/StoreContext'
 import { CategoryTag } from '../components/CategoryTag'
+import { SortToggle, sortItems } from '../components/SortToggle'
+import type { SortMode } from '../components/SortToggle'
 import { relTime } from '../lib/time'
 
 export function Answered() {
   const { state, dispatch } = useStore()
+  const [sort, setSort] = useState<SortMode>('recent')
+  const answered = sortItems(state.answered, sort)
   const now = Date.now()
   return (
     <div className="px-5 pt-1.5 pb-[130px]">
@@ -18,7 +23,11 @@ export function Answered() {
         </div>
       </div>
 
-      {state.answered.map(a => (
+      <div className="flex justify-end mb-3">
+        <SortToggle value={sort} onChange={setSort} />
+      </div>
+
+      {answered.map(a => (
         <div
           key={a.id}
           className="bg-white border border-[oklch(0.9_0.015_240)] rounded-lg px-4 py-[15px] mb-[11px] shadow-[0_3px_10px_-6px_oklch(0.5_0.06_250_/_.35)] flex gap-[13px] items-start"

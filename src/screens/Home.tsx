@@ -1,10 +1,15 @@
+import { useState } from 'react'
 import { useStore } from '../store/StoreContext'
 import { StreakCard } from '../components/StreakCard'
 import { PrayerRow } from '../components/PrayerRow'
+import { SortToggle, sortItems } from '../components/SortToggle'
+import type { SortMode } from '../components/SortToggle'
 import { greeting, dateLine } from '../lib/time'
 
 export function Home() {
   const { state } = useStore()
+  const [sort, setSort] = useState<SortMode>('recent')
+  const prayers = sortItems(state.prayers, sort)
   return (
     <div className="px-5 pt-1.5 pb-[130px]">
       <div className="flex justify-between items-start mb-5">
@@ -25,9 +30,11 @@ export function Home() {
           {state.prayers.length} Active
         </div>
       </div>
-      <div className="h-3.5" />
+      <div className="flex justify-end pt-2.5 pb-1">
+        <SortToggle value={sort} onChange={setSort} />
+      </div>
       <div className="border-y border-[oklch(0.84_0.025_245)]">
-        {state.prayers.map((p, i) => (
+        {prayers.map((p, i) => (
           <PrayerRow key={p.id} prayer={p} first={i === 0} />
         ))}
       </div>

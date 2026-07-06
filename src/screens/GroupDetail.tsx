@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import type { FeedItem } from '../store/types'
 import { useStore } from '../store/StoreContext'
 import { CategoryTag } from '../components/CategoryTag'
+import { SortToggle, sortItems } from '../components/SortToggle'
+import type { SortMode } from '../components/SortToggle'
 import { Avatar } from '../components/Avatar'
 
 function FeedCard({ item, groupId }: { item: FeedItem; groupId: string }) {
@@ -32,9 +35,10 @@ function FeedCard({ item, groupId }: { item: FeedItem; groupId: string }) {
 
 export function GroupDetail() {
   const { state, dispatch } = useStore()
+  const [sort, setSort] = useState<SortMode>('recent')
   const group = state.groups.find(g => g.id === state.activeGroupId)
   if (!group) return null
-  const feed = state.feeds[group.id] ?? []
+  const feed = sortItems(state.feeds[group.id] ?? [], sort)
   return (
     <div className="px-5 pt-1.5 pb-[130px]">
       <button
@@ -64,7 +68,10 @@ export function GroupDetail() {
         </button>
       </div>
 
-      <div className="text-sm font-bold text-[oklch(0.3_0.03_255)] mb-3">Shared requests</div>
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-sm font-bold text-[oklch(0.3_0.03_255)]">Shared requests</div>
+        <SortToggle value={sort} onChange={setSort} />
+      </div>
       {feed.map(f => (
         <FeedCard key={f.id} item={f} groupId={group.id} />
       ))}

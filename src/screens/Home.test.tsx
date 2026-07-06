@@ -36,6 +36,24 @@ describe('Home', () => {
     expect(screen.getByText('4 Active')).toBeInTheDocument()
   })
 
+  it('sorts prayers by category and back to recent', async () => {
+    ui()
+    const rowTexts = () =>
+      screen.getAllByText(/Grandma Ruth's|Wisdom for|Maya's safe|Tom & Elise|Sarah's visa/).map(e => e.textContent)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Category' }))
+    expect(rowTexts()).toEqual([
+      "Tom & Elise's marriage — patience and grace", // Family
+      "Thankful for Maya's safe arrival 💙", // Gratitude
+      'Wisdom for the job decision this month', // Guidance
+      "Grandma Ruth's recovery after her surgery", // Health
+      "Sarah's visa application to come through", // Provision
+    ])
+
+    await userEvent.click(screen.getByRole('button', { name: 'Recent' }))
+    expect(rowTexts()[0]).toBe("Grandma Ruth's recovery after her surgery")
+  })
+
   it('shows streak chip only for prayers with streak > 0', () => {
     ui()
     expect(screen.getByText('· 12D')).toBeInTheDocument()

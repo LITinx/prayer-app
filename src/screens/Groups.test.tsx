@@ -43,6 +43,21 @@ describe('Groups', () => {
     expect(screen.getByRole('button', { name: /🙏 Praying · 13/ })).toBeInTheDocument()
   })
 
+  it('sorts the shared requests feed by category', async () => {
+    ui()
+    await userEvent.click(screen.getByText('Morning Grace'))
+    const feedTexts = () =>
+      screen.getAllByText(/Traveling mercies|biopsy results|sister said yes/).map(e => e.textContent)
+
+    expect(feedTexts()[0]).toMatch(/Traveling mercies/)
+    await userEvent.click(screen.getByRole('button', { name: 'Category' }))
+    expect(feedTexts()).toEqual([
+      'Grateful — my sister said yes to being baptized! 🙏', // Gratitude
+      'Traveling mercies for our team flying out to the retreat this weekend.', // Guidance
+      "My mom's biopsy results come in Thursday. Peace for the whole family.", // Health
+    ])
+  })
+
   it('back link returns to groups list', async () => {
     ui()
     await userEvent.click(screen.getByText('Morning Grace'))
