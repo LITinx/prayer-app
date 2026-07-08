@@ -26,7 +26,7 @@ const page = await browser.newPage({ viewport: { width: 430, height: 900 } })
 ## Gotchas
 
 - **Mic FAB never settles**: `animate-mic-float` runs forever, so `page.click('button[aria-label="Add prayer by voice"]')` times out on the stability check. Use `{ force: true }`.
-- **Ambiguous "Answered"/"Prayers" text**: every PrayerRow has an "Answered" button. Target bottom-nav buttons by their full labels: `✓ Answered`, `☰ Prayers`, `◎ Groups`, `☾ Reminders`.
+- **Ambiguous "Answered" text**: every PrayerRow has an "Answered" button (uppercase-styled, accessible name "Mark … as answered"), and the bottom-nav buttons are named `Prayers`, `Groups`, `Answered`, `Reminders` (SVG icons, label text only). Scope nav clicks to the nav container or use exact accessible names.
 - **Screen persists across reload**: the app restores the last screen from localStorage (same day), so after `page.reload()` you land where you were — don't wait for the Home heading.
 - **No speech API in headless Chrome**: the voice overlay opens straight in typed-fallback review mode; fill the "What would you like to pray for?" textarea and click "Add to prayer list".
 - Fresh seed = empty prayers/answered, one group (Morning Grace). Seed legacy/odd states by writing `prayer-app-state-v1` via `page.evaluate` then reloading.

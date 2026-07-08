@@ -12,16 +12,16 @@ describe('App navigation', () => {
 
   it('navigates to groups, answered, reminders, and back home', async () => {
     render(<App />)
-    await userEvent.click(screen.getByRole('button', { name: '◎ Groups' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
     expect(screen.getByText('Pray together, in one place')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: '✓ Answered' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Answered' }))
     expect(screen.getByText('Looking back with gratitude')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: '☾ Reminders' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Reminders' }))
     expect(screen.getByText('Coming soon')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: '☰ Prayers' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Prayers' }))
     expect(screen.getByText('Prayer List')).toBeInTheDocument()
   })
 
