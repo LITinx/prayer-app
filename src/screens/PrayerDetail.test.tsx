@@ -13,6 +13,12 @@ vi.mock('../sync/hydrate', () => ({
   importLegacy: vi.fn(async () => {}),
 }))
 
+vi.mock('../auth/useSession', () => ({ useSession: () => ({ user: { id: 'local' } }) }))
+
+// SignIn (imported by App) pulls in the real supabase client, which throws
+// in tests without env vars — stub it out even though it's never rendered here.
+vi.mock('../lib/supabase', () => ({ supabase: { auth: { signOut: vi.fn() } } }))
+
 function seeded(activePrayerId: string) {
   const s = demoState(Date.now(), todayStr())
   saveCache('local', { ...s, screen: 'prayerDetail', activePrayerId })

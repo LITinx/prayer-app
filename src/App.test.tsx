@@ -1,6 +1,12 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
+import { saveCache } from './store/persistence'
+import { demoState } from './test/fixtures'
+import { todayStr } from './lib/time'
+
+const mockSession = vi.hoisted(() => ({ current: null as unknown }))
+vi.mock('./auth/useSession', () => ({ useSession: () => mockSession.current }))
 
 vi.mock('./sync/hydrate', () => ({
   executeWrite: vi.fn(async () => {}),
@@ -8,7 +14,15 @@ vi.mock('./sync/hydrate', () => ({
   importLegacy: vi.fn(async () => {}),
 }))
 
-beforeEach(() => localStorage.clear())
+// SignIn (rendered when signed out) imports the real supabase client, which
+// throws in tests without env vars — stub it out here too.
+vi.mock('./lib/supabase', () => ({ supabase: { auth: { signOut: vi.fn() } } }))
+
+beforeEach(() => {
+  localStorage.clear()
+  mockSession.current = { user: { id: 'u-test' } }
+  saveCache('u-test', demoState(Date.now(), todayStr()))
+})
 
 describe('App navigation', () => {
   it('starts on home', () => {
@@ -34,5 +48,20 @@ describe('App navigation', () => {
   it('shows the voice FAB', () => {
     render(<App />)
     expect(screen.getByRole('button', { name: 'Add prayer by voice' })).toBeInTheDocument()
+  })
+})
+
+describe('App auth gate', () => {
+  it('shows the sign-in screen when signed out', () => {
+    mockSession.current = null
+    render(<App />)
+    expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument()
+  })
+
+  it('shows the app when signed in', () => {
+    mockSession.current = { user: { id: 'u-test' } }
+    saveCache('u-test', demoState(Date.now(), todayStr()))
+    render(<App />)
+    expect(screen.getByText('Prayer List')).toBeInTheDocument()
   })
 })

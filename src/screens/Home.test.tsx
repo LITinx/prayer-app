@@ -12,6 +12,8 @@ vi.mock('../sync/hydrate', () => ({
   importLegacy: vi.fn(async () => {}),
 }))
 
+vi.mock('../lib/supabase', () => ({ supabase: { auth: { signOut: vi.fn() } } }))
+
 const ui = () => render(<StoreProvider userId="local"><Home /></StoreProvider>)
 
 beforeEach(() => {
@@ -81,5 +83,11 @@ describe('Home', () => {
     ui()
     expect(screen.getByText('· 12D')).toBeInTheDocument()
     expect(screen.queryByText('· 0D')).not.toBeInTheDocument()
+  })
+
+  it('account menu offers sign out', async () => {
+    ui()
+    await userEvent.click(screen.getByRole('button', { name: 'Account menu' }))
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument()
   })
 })

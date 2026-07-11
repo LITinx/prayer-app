@@ -4,10 +4,12 @@ import { StreakCard } from '../components/StreakCard'
 import { PrayerRow } from '../components/PrayerRow'
 import { CategoryFilter, presentCategories, filterByCategories } from '../components/CategoryFilter'
 import { greeting, dateLine } from '../lib/time'
+import { supabase } from '../lib/supabase'
 
 export function Home() {
   const { state } = useStore()
   const [selectedCats, setSelectedCats] = useState<string[]>([])
+  const [menuOpen, setMenuOpen] = useState(false)
   const toggleCat = (id: string) =>
     setSelectedCats(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]))
   const active = state.prayers.filter(p => p.answeredAt === null)
@@ -21,8 +23,22 @@ export function Home() {
           </div>
           <div className="text-[29px] font-medium text-[oklch(0.28_0.04_255)] leading-[1.05] mt-[3px]">{dateLine()}</div>
         </div>
-        <div className="w-[42px] h-[42px] rounded-full bg-[linear-gradient(140deg,oklch(0.72_0.11_235),oklch(0.6_0.13_258))] flex items-center justify-center text-white font-bold text-[15px] shadow-[0_6px_16px_oklch(0.6_0.12_245_/_.4)]">
-          {state.profile.initials}
+        <div className="relative">
+          <button
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label="Account menu"
+            className="w-[42px] h-[42px] rounded-full bg-[linear-gradient(140deg,oklch(0.72_0.11_235),oklch(0.6_0.13_258))] flex items-center justify-center text-white font-bold text-[15px] shadow-[0_6px_16px_oklch(0.6_0.12_245_/_.4)]"
+          >
+            {state.profile.initials}
+          </button>
+          {menuOpen && (
+            <button
+              onClick={() => supabase.auth.signOut()}
+              className="absolute right-0 top-[48px] z-10 whitespace-nowrap bg-white border border-[oklch(0.9_0.015_240)] rounded-lg px-4 py-2.5 text-[13px] font-bold text-[oklch(0.45_0.03_255)] shadow-[0_8px_20px_-8px_oklch(0.5_0.06_250_/_.5)]"
+            >
+              Sign out
+            </button>
+          )}
         </div>
       </div>
       <StreakCard />
