@@ -4,6 +4,13 @@ export interface LogEntry {
   prayedOn: string // YYYY-MM-DD
 }
 
+/**
+ * Returns the calendar day before `dateStr` as YYYY-MM-DD.
+ *
+ * Uses calendar-field arithmetic (`setDate(getDate() - 1)`) rather than
+ * subtracting 24h of wall-clock time, so DST transitions cannot cause a
+ * day to be skipped or repeated.
+ */
 export function prevDay(dateStr: string): string {
   const d = new Date(`${dateStr}T00:00:00`)
   d.setDate(d.getDate() - 1)
@@ -31,6 +38,13 @@ export function streak(logs: LogEntry[], prayerId: string, today: string): numbe
   return runLength(new Set(logs.filter(l => l.prayerId === prayerId).map(l => l.prayedOn)), today)
 }
 
+/**
+ * Total days prayed for a prayer.
+ *
+ * Counts log rows directly, trusting the one-row-per-prayer-per-day
+ * invariant enforced upstream (DB unique constraint on (prayerId, prayedOn)
+ * plus the reducer's toggle semantics). Duplicate rows would each count.
+ */
 export function daysPrayed(logs: LogEntry[], prayerId: string): number {
   return logs.filter(l => l.prayerId === prayerId).length
 }
@@ -39,6 +53,12 @@ export function appStreak(logs: LogEntry[], today: string): number {
   return runLength(new Set(logs.map(l => l.prayedOn)), today)
 }
 
+/**
+ * Day-of-month numbers on which the prayer was prayed in the given month.
+ *
+ * Note: `month` is 1-12 (January = 1), unlike JS `Date.getMonth()` which
+ * is 0-based — callers using `getMonth()` must add 1.
+ */
 export function monthMarks(logs: LogEntry[], prayerId: string, year: number, month: number): Set<number> {
   const prefix = `${year}-${String(month).padStart(2, '0')}-`
   return new Set(

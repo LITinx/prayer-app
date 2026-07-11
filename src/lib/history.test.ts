@@ -9,6 +9,9 @@ describe('prevDay', () => {
     expect(prevDay('2026-07-01')).toBe('2026-06-30')
     expect(prevDay('2026-01-01')).toBe('2025-12-31')
   })
+  it('handles the leap-day boundary', () => {
+    expect(prevDay('2024-03-01')).toBe('2024-02-29')
+  })
 })
 
 describe('prayedToday', () => {
@@ -36,11 +39,29 @@ describe('streak', () => {
     const logs = [L('p1', today), L('p1', '2026-07-09')]
     expect(streak(logs, 'p1', today)).toBe(1)
   })
+  it('ignores future-dated entries', () => {
+    const logs = [L('p1', '2026-07-20'), L('p1', today), L('p1', '2026-07-10')]
+    expect(streak(logs, 'p1', today)).toBe(2)
+  })
+  it('is order-independent: unsorted log gives the same result as sorted', () => {
+    const sorted = [L('p1', today), L('p1', '2026-07-10'), L('p1', '2026-07-09')]
+    const unsorted = [L('p1', '2026-07-10'), L('p1', '2026-07-09'), L('p1', today)]
+    expect(streak(unsorted, 'p1', today)).toBe(streak(sorted, 'p1', today))
+    expect(streak(unsorted, 'p1', today)).toBe(3)
+  })
 })
 
 describe('daysPrayed', () => {
   it('counts all rows for the prayer', () => {
     const logs = [L('p1', today), L('p1', '2026-07-01'), L('p2', today)]
+    expect(daysPrayed(logs, 'p1')).toBe(2)
+  })
+})
+
+describe('duplicate rows for the same prayer and date', () => {
+  it('streak counts the date once, daysPrayed counts each row', () => {
+    const logs = [L('p1', today), L('p1', today)]
+    expect(streak(logs, 'p1', today)).toBe(1)
     expect(daysPrayed(logs, 'p1')).toBe(2)
   })
 })
