@@ -11,7 +11,7 @@ create table public.categories (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references public.profiles(id) on delete cascade,
   name       text not null,
-  hue        smallint not null check (hue between 0 and 360),
+  hue        smallint not null check (hue between 0 and 359),
   created_at timestamptz not null default now(),
   unique (user_id, name)
 );
@@ -37,13 +37,17 @@ create table public.prayer_logs (
 create index prayers_user_idx on public.prayers(user_id);
 create index prayer_logs_user_idx on public.prayer_logs(user_id);
 
+-- Note: row access relies on Supabase's default table grants to the
+-- anon/authenticated roles; running this outside Supabase requires explicit GRANTs.
 alter table public.profiles enable row level security;
 alter table public.categories enable row level security;
 alter table public.prayers enable row level security;
 alter table public.prayer_logs enable row level security;
 
-create policy "own profile" on public.profiles
-  for all using (id = auth.uid()) with check (id = auth.uid());
+create policy "read own profile" on public.profiles
+  for select using (id = auth.uid());
+create policy "update own profile" on public.profiles
+  for update using (id = auth.uid()) with check (id = auth.uid());
 create policy "own categories" on public.categories
   for all using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy "own prayers" on public.prayers
@@ -58,7 +62,7 @@ language plpgsql
 security definer set search_path = public
 as $$
 declare
-  full_name text := coalesce(new.raw_user_meta_data ->> 'full_name', 'Friend');
+  full_name text := coalesce(nullif(trim(new.raw_user_meta_data ->> 'full_name'), ''), 'Friend');
 begin
   insert into public.profiles (id, name, initials)
   values (
