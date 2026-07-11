@@ -31,6 +31,10 @@ describe('cache', () => {
     localStorage.setItem(cacheKey('user-1'), JSON.stringify({ hello: 1 }))
     expect(loadCache('user-1')).toBeNull()
   })
+  it('returns null when required non-array fields are missing', () => {
+    localStorage.setItem(cacheKey('user-1'), JSON.stringify({ prayers: [], logs: [], categories: [] }))
+    expect(loadCache('user-1')).toBeNull()
+  })
   it('saveCache swallows storage failures', () => {
     const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('QuotaExceededError')

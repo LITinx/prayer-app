@@ -39,6 +39,9 @@ export function loadCache(userId: string): AppState | null {
     if (!raw) return null
     const s = JSON.parse(raw) as AppState
     if (!Array.isArray(s.prayers) || !Array.isArray(s.logs) || !Array.isArray(s.categories)) return null
+    if (typeof s.profile !== 'object' || s.profile === null || typeof s.profile.name !== 'string') return null
+    if (!Array.isArray(s.groups)) return null
+    if (typeof s.feeds !== 'object' || s.feeds === null) return null
     return { ...s, syncError: false }
   } catch {
     return null
