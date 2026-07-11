@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { StoreProvider, useStore } from './StoreContext'
-import { STORAGE_KEY, saveState } from './persistence'
+import { cacheKey, saveCache } from './persistence'
 import { demoState } from '../test/fixtures'
 import { todayStr } from '../lib/time'
 
@@ -18,7 +18,7 @@ function Probe() {
 
 beforeEach(() => {
   localStorage.clear()
-  saveState(demoState(Date.now(), todayStr()))
+  saveCache('local', demoState(Date.now(), todayStr()))
 })
 
 describe('StoreProvider', () => {
@@ -27,7 +27,7 @@ describe('StoreProvider', () => {
     expect(screen.getByTestId('count')).toHaveTextContent('5')
     await userEvent.click(screen.getByText('answer'))
     expect(screen.getByTestId('count')).toHaveTextContent('4')
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)!)
+    const saved = JSON.parse(localStorage.getItem(cacheKey('local'))!)
     expect(saved.prayers.find((p: { id: string }) => p.id === 'p1').answeredAt).toBe(1)
   })
 })

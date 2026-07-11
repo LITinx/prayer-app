@@ -3,16 +3,15 @@ import type { Dispatch, ReactNode } from 'react'
 import type { AppState } from './types'
 import { reducer } from './reducer'
 import type { Action } from './reducer'
-import { loadState, saveState } from './persistence'
-import { todayStr } from '../lib/time'
+import { loadCache, saveCache, emptyState } from './persistence'
 
 const StoreCtx = createContext<{ state: AppState; dispatch: Dispatch<Action> } | null>(null)
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, undefined, () => loadState(Date.now(), todayStr()))
+  const [state, dispatch] = useReducer(reducer, undefined, () => loadCache('local') ?? emptyState())
 
   useEffect(() => {
-    saveState(state)
+    saveCache('local', state)
   }, [state])
 
   return <StoreCtx.Provider value={{ state, dispatch }}>{children}</StoreCtx.Provider>

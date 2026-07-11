@@ -1,13 +1,21 @@
 import type { AppState } from './types'
 
-export const STORAGE_KEY = 'prayer-app-state-v1'
+export const LEGACY_KEY = 'prayer-app-state-v1'
+export const cacheKey = (userId: string) => `prayer-app-cache-v2:${userId}`
 
-export function seedState(_now: number, _today: string): AppState {
+/** Legacy (pre-account) localStorage shape — read once for the first-sign-in import. */
+export interface LegacyState {
+  prayers: { id: string; text: string; category: string; streak: number; prayedToday: boolean }[]
+  answered: { id: string; text: string; category: string; answeredAt: number; streak?: number }[]
+  appStreak?: { count: number; lastPrayedDate: string }
+}
+
+export function emptyState(): AppState {
   return {
     screen: 'home',
     activeGroupId: null,
     activePrayerId: null,
-    profile: { name: 'Anna', initials: 'AR' },
+    profile: { name: '', initials: '' },
     categories: [],
     prayers: [],
     logs: [],
@@ -25,24 +33,38 @@ export function seedState(_now: number, _today: string): AppState {
   }
 }
 
-export function loadState(now: number, today: string): AppState {
+export function loadCache(userId: string): AppState | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return seedState(now, today)
+    const raw = localStorage.getItem(cacheKey(userId))
+    if (!raw) return null
     const s = JSON.parse(raw) as AppState
-    if (!Array.isArray(s.prayers) || !Array.isArray(s.logs) || !Array.isArray(s.categories)) {
-      return seedState(now, today)
-    }
-    return s
+    if (!Array.isArray(s.prayers) || !Array.isArray(s.logs) || !Array.isArray(s.categories)) return null
+    return { ...s, syncError: false }
   } catch {
-    return seedState(now, today)
+    return null
   }
 }
 
-export function saveState(state: AppState): void {
+export function saveCache(userId: string, state: AppState): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    localStorage.setItem(cacheKey(userId), JSON.stringify(state))
   } catch {
-    // storage full or unavailable — silently ignore per spec
+    // storage full or unavailable — cache is best-effort
   }
+}
+
+export function readLegacyState(): LegacyState | null {
+  try {
+    const raw = localStorage.getItem(LEGACY_KEY)
+    if (!raw) return null
+    const s = JSON.parse(raw) as LegacyState
+    if (!Array.isArray(s.prayers) || !Array.isArray(s.answered)) return null
+    return s
+  } catch {
+    return null
+  }
+}
+
+export function clearLegacyState(): void {
+  localStorage.removeItem(LEGACY_KEY)
 }

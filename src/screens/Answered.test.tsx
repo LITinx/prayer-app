@@ -1,14 +1,14 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { StoreProvider } from '../store/StoreContext'
-import { saveState } from '../store/persistence'
+import { saveCache } from '../store/persistence'
 import { demoState } from '../test/fixtures'
 import { todayStr } from '../lib/time'
 import { Answered } from './Answered'
 
 beforeEach(() => {
   localStorage.clear()
-  saveState(demoState(Date.now(), todayStr()))
+  saveCache('local', demoState(Date.now(), todayStr()))
 })
 
 describe('Answered', () => {

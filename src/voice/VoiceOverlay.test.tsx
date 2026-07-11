@@ -1,7 +1,7 @@
 import { render, screen, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../App'
-import { saveState } from '../store/persistence'
+import { saveCache } from '../store/persistence'
 import { demoState } from '../test/fixtures'
 import { todayStr } from '../lib/time'
 
@@ -19,7 +19,7 @@ class FakeRec {
 
 beforeEach(() => {
   localStorage.clear()
-  saveState(demoState(Date.now(), todayStr()))
+  saveCache('local', demoState(Date.now(), todayStr()))
 })
 afterEach(() => {
   delete (window as unknown as Record<string, unknown>).SpeechRecognition
