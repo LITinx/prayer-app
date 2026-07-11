@@ -2463,3 +2463,4 @@ git commit -m "docs: supabase setup instructions and verify-skill notes"
 ## Amendments during execution
 
 - Task 1 schema hardened post-review (commit a0a9426): `full_name` trimmed with empty-string fallback to 'Friend'; profiles RLS split into select/update-only policies (no user insert/delete); hue check tightened to 0–359; comment documenting reliance on Supabase default grants.
+- Task 7 amended post-review (commit ee453e8): answered-prayer log backfill uses local dates via `todayStr(new Date(answeredAt))` (was UTC slice); importLegacy is idempotent (upsert with ignoreDuplicates on both tables) and re-runnable — Task 9's hydration should call `importLegacy` whenever a legacy snapshot exists, then `fetchAll` ONCE (replaces the plan's fetch → if-empty-import → refetch sequence).
