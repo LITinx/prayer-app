@@ -34,7 +34,7 @@ create table categories (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references profiles(id) on delete cascade,
   name       text not null,
-  hue        smallint not null check (hue between 0 and 360),  -- drives the oklch color
+  hue        smallint not null check (hue between 0 and 359),  -- drives the oklch color
   created_at timestamptz not null default now(),
   unique (user_id, name)
 );
