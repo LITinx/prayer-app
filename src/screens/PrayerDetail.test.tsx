@@ -7,10 +7,16 @@ import { demoState } from '../test/fixtures'
 import { todayStr } from '../lib/time'
 import { PrayerDetail, monthGrid } from './PrayerDetail'
 
+vi.mock('../sync/hydrate', () => ({
+  executeWrite: vi.fn(async () => {}),
+  fetchAll: vi.fn(async () => { throw new Error('offline test') }), // keeps cached fixture state
+  importLegacy: vi.fn(async () => {}),
+}))
+
 function seeded(activePrayerId: string) {
   const s = demoState(Date.now(), todayStr())
   saveCache('local', { ...s, screen: 'prayerDetail', activePrayerId })
-  return render(<StoreProvider><PrayerDetail /></StoreProvider>)
+  return render(<StoreProvider userId="local"><PrayerDetail /></StoreProvider>)
 }
 
 beforeEach(() => localStorage.clear())
@@ -59,7 +65,7 @@ describe('PrayerDetail', () => {
     const s = demoState(Date.now(), todayStr())
     s.logs.push({ id: 'p4-2025-12-15', prayerId: 'p4', prayedOn: '2025-12-15' })
     saveCache('local', { ...s, screen: 'prayerDetail', activePrayerId: 'p4' })
-    render(<StoreProvider><PrayerDetail /></StoreProvider>)
+    render(<StoreProvider userId="local"><PrayerDetail /></StoreProvider>)
 
     // current month shows no marks for p4
     expect(screen.queryByLabelText(/, prayed$/)).not.toBeInTheDocument()

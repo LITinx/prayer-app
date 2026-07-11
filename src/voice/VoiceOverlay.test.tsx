@@ -5,6 +5,12 @@ import { saveCache } from '../store/persistence'
 import { demoState } from '../test/fixtures'
 import { todayStr } from '../lib/time'
 
+vi.mock('../sync/hydrate', () => ({
+  executeWrite: vi.fn(async () => {}),
+  fetchAll: vi.fn(async () => { throw new Error('offline test') }), // keeps cached fixture state
+  importLegacy: vi.fn(async () => {}),
+}))
+
 class FakeRec {
   static instance: FakeRec | null = null
   continuous = false

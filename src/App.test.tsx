@@ -2,6 +2,12 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
 
+vi.mock('./sync/hydrate', () => ({
+  executeWrite: vi.fn(async () => {}),
+  fetchAll: vi.fn(async () => { throw new Error('offline test') }), // keeps cached fixture state
+  importLegacy: vi.fn(async () => {}),
+}))
+
 beforeEach(() => localStorage.clear())
 
 describe('App navigation', () => {

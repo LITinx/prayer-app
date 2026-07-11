@@ -34,7 +34,7 @@ function Shell() {
 
 export default function App() {
   return (
-    <StoreProvider>
+    <StoreProvider userId="local">{/* TODO(Task 10): derive userId from the auth session gate */}
       <Shell />
     </StoreProvider>
   )

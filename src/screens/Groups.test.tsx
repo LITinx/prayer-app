@@ -12,7 +12,13 @@ function GroupsFlow() {
   return state.screen === 'groupDetail' ? <GroupDetail /> : <Groups />
 }
 
-const ui = () => render(<StoreProvider><GroupsFlow /></StoreProvider>)
+vi.mock('../sync/hydrate', () => ({
+  executeWrite: vi.fn(async () => {}),
+  fetchAll: vi.fn(async () => { throw new Error('offline test') }), // keeps cached fixture state
+  importLegacy: vi.fn(async () => {}),
+}))
+
+const ui = () => render(<StoreProvider userId="local"><GroupsFlow /></StoreProvider>)
 
 beforeEach(() => {
   localStorage.clear()

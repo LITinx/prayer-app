@@ -6,7 +6,13 @@ import { demoState } from '../test/fixtures'
 import { todayStr } from '../lib/time'
 import { Home } from './Home'
 
-const ui = () => render(<StoreProvider><Home /></StoreProvider>)
+vi.mock('../sync/hydrate', () => ({
+  executeWrite: vi.fn(async () => {}),
+  fetchAll: vi.fn(async () => { throw new Error('offline test') }), // keeps cached fixture state
+  importLegacy: vi.fn(async () => {}),
+}))
+
+const ui = () => render(<StoreProvider userId="local"><Home /></StoreProvider>)
 
 beforeEach(() => {
   localStorage.clear()

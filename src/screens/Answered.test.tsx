@@ -6,6 +6,12 @@ import { demoState } from '../test/fixtures'
 import { todayStr } from '../lib/time'
 import { Answered } from './Answered'
 
+vi.mock('../sync/hydrate', () => ({
+  executeWrite: vi.fn(async () => {}),
+  fetchAll: vi.fn(async () => { throw new Error('offline test') }), // keeps cached fixture state
+  importLegacy: vi.fn(async () => {}),
+}))
+
 beforeEach(() => {
   localStorage.clear()
   saveCache('local', demoState(Date.now(), todayStr()))
@@ -13,7 +19,7 @@ beforeEach(() => {
 
 describe('Answered', () => {
   it('renders banner count and answered prayers with relative times', () => {
-    render(<StoreProvider><Answered /></StoreProvider>)
+    render(<StoreProvider userId="local"><Answered /></StoreProvider>)
     expect(screen.getByText('3 prayers answered')).toBeInTheDocument()
     expect(screen.getByText(/Dad's test results came back clear/)).toBeInTheDocument()
     expect(screen.getByText('· answered 3 days ago')).toBeInTheDocument()
@@ -22,7 +28,7 @@ describe('Answered', () => {
   })
 
   it('filters answered prayers by selected categories', async () => {
-    render(<StoreProvider><Answered /></StoreProvider>)
+    render(<StoreProvider userId="local"><Answered /></StoreProvider>)
     const cardTexts = () =>
       screen.getAllByText(/Dad's test results|new apartment|Reconciled with/).map(e => e.textContent)
 
@@ -35,7 +41,7 @@ describe('Answered', () => {
   })
 
   it('ignores a selected filter whose category disappears from the list', async () => {
-    render(<StoreProvider><Answered /></StoreProvider>)
+    render(<StoreProvider userId="local"><Answered /></StoreProvider>)
     await userEvent.click(screen.getByRole('button', { name: 'Family' }))
     // undo the only Family entry while the Family filter is active
     await userEvent.click(screen.getByRole('button', { name: /Undo .*Reconciled/ }))
@@ -44,7 +50,7 @@ describe('Answered', () => {
   })
 
   it('undo returns the prayer to the active list', async () => {
-    render(<StoreProvider><Answered /></StoreProvider>)
+    render(<StoreProvider userId="local"><Answered /></StoreProvider>)
     await userEvent.click(screen.getByRole('button', { name: /Undo .*Dad's test results/ }))
     expect(screen.queryByText(/Dad's test results came back clear/)).not.toBeInTheDocument()
     expect(screen.getByText('2 prayers answered')).toBeInTheDocument()
