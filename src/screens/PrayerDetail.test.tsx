@@ -1,10 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import App from '../App'
 import { StoreProvider } from '../store/StoreContext'
 import { saveCache } from '../store/persistence'
 import { demoState } from '../test/fixtures'
 import { todayStr } from '../lib/time'
-import { PrayerDetail } from './PrayerDetail'
+import { PrayerDetail, monthGrid } from './PrayerDetail'
 
 function seeded(activePrayerId: string) {
   const s = demoState(Date.now(), todayStr())
@@ -51,5 +52,56 @@ describe('PrayerDetail', () => {
     await userEvent.click(screen.getByText('‹ Back'))
     // PrayerDetail renders nothing once screen changes; assert via store side effect:
     expect(screen.queryByText(/prayed 6 days/i)).not.toBeInTheDocument()
+  })
+
+  it('pages back across a year boundary and marks follow the cursor', async () => {
+    // p4 has no fixture logs — give it exactly one, in December 2025
+    const s = demoState(Date.now(), todayStr())
+    s.logs.push({ id: 'p4-2025-12-15', prayerId: 'p4', prayedOn: '2025-12-15' })
+    saveCache('local', { ...s, screen: 'prayerDetail', activePrayerId: 'p4' })
+    render(<StoreProvider><PrayerDetail /></StoreProvider>)
+
+    // current month shows no marks for p4
+    expect(screen.queryByLabelText(/, prayed$/)).not.toBeInTheDocument()
+
+    const now = new Date()
+    const monthsBack = (now.getFullYear() - 2025) * 12 + now.getMonth() - 11
+    for (let i = 0; i < monthsBack; i++) {
+      await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
+    }
+    expect(screen.getByText('December 2025')).toBeInTheDocument()
+    expect(screen.getByLabelText('15, prayed')).toBeInTheDocument()
+  })
+
+  it('back from an answered prayer lands on the Answered screen', async () => {
+    const s = demoState(Date.now(), todayStr())
+    saveCache('local', { ...s, screen: 'prayerDetail', activePrayerId: 'a1' })
+    render(<App />)
+    await userEvent.click(screen.getByText('‹ Back'))
+    expect(screen.getByText('Looking back with gratitude')).toBeInTheDocument()
+  })
+})
+
+describe('monthGrid', () => {
+  it('February 2024 (leap year, starts Thursday): lead 3, 29 day cells, 32 total', () => {
+    const cells = monthGrid(2024, 2)
+    expect(cells).toHaveLength(32)
+    expect(cells.slice(0, 3)).toEqual([null, null, null])
+    expect(cells[3]).toBe(1)
+    expect(cells.filter(c => c !== null)).toHaveLength(29)
+    expect(cells[31]).toBe(29)
+  })
+
+  it('January 2023 (starts Sunday): lead 6', () => {
+    const cells = monthGrid(2023, 1)
+    expect(cells.slice(0, 6)).toEqual([null, null, null, null, null, null])
+    expect(cells[6]).toBe(1)
+    expect(cells.filter(c => c !== null)).toHaveLength(31)
+  })
+
+  it('July 2026 has 31 day cells', () => {
+    const cells = monthGrid(2026, 7)
+    expect(cells.filter(c => c !== null)).toHaveLength(31)
+    expect(cells[cells.length - 1]).toBe(31)
   })
 })

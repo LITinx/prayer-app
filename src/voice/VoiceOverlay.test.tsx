@@ -1,4 +1,4 @@
-import { render, screen, act } from '@testing-library/react'
+import { render, screen, act, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../App'
 import { saveCache } from '../store/persistence'
@@ -122,5 +122,25 @@ describe('VoiceOverlay — listening flow', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add to prayer list' }))
     expect(screen.getByText('For the missionaries')).toBeInTheDocument()
     expect(screen.getAllByText('Missions').length).toBeGreaterThan(0) // filter chip + tag on the new row
+  })
+
+  it('creating with an existing name in different case selects it without a duplicate', async () => {
+    render(<App />)
+    await userEvent.click(screen.getByRole('button', { name: 'Add prayer by voice' }))
+    const dialog = within(screen.getByRole('dialog', { name: 'Add a prayer request' }))
+    await userEvent.click(dialog.getByRole('button', { name: '+ New' }))
+    await userEvent.type(dialog.getByPlaceholderText('Category name'), 'health')
+    await userEvent.click(dialog.getByRole('button', { name: 'Create' }))
+    expect(dialog.getByRole('button', { name: /Health/, pressed: true })).toBeInTheDocument()
+    expect(dialog.getAllByRole('button', { name: /Health/ })).toHaveLength(1) // no duplicate chip
+    expect(dialog.queryByPlaceholderText('Category name')).not.toBeInTheDocument() // editor closed
+  })
+
+  it('whitespace-only category name leaves Create disabled', async () => {
+    render(<App />)
+    await userEvent.click(screen.getByRole('button', { name: 'Add prayer by voice' }))
+    await userEvent.click(screen.getByRole('button', { name: '+ New' }))
+    await userEvent.type(screen.getByPlaceholderText('Category name'), '   ')
+    expect(screen.getByRole('button', { name: 'Create' })).toBeDisabled()
   })
 })
