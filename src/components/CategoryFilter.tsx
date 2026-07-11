@@ -1,5 +1,5 @@
 import type { Category } from '../store/types'
-import { catColor } from '../store/categories'
+import { catColor, CATEGORY_HUES } from '../store/categories'
 
 /** Distinct categories present in a list, alphabetically. */
 export function presentCategories<T extends { category: Category }>(items: T[]): Category[] {
@@ -33,7 +33,7 @@ export function CategoryFilter({
       aria-label="Filter by category"
     >
       {categories.map(c => {
-        const col = catColor(c)
+        const col = catColor(CATEGORY_HUES[c])
         const active = selected.includes(c)
         return (
           <button

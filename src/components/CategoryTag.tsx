@@ -1,8 +1,8 @@
 import type { Category } from '../store/types'
-import { catColor } from '../store/categories'
+import { catColor, CATEGORY_HUES } from '../store/categories'
 
 export function CategoryTag({ category }: { category: Category }) {
-  const c = catColor(category)
+  const c = catColor(CATEGORY_HUES[category])
   return (
     <span
       className="inline-flex items-center gap-1.5 text-[10.5px] font-bold tracking-[.09em] uppercase"

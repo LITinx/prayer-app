@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Category } from '../store/types'
 import { useStore } from '../store/StoreContext'
-import { CATEGORIES, catColor } from '../store/categories'
+import { CATEGORIES, catColor, CATEGORY_HUES } from '../store/categories'
 import { useSpeech } from './useSpeech'
 import { categorize } from './categorize'
 
@@ -141,7 +141,7 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
             <div className="flex flex-wrap gap-2 mb-[22px]">
               {CATEGORIES.map(name => {
                 const active = name === category
-                const c = catColor(name)
+                const c = catColor(CATEGORY_HUES[name])
                 return (
                   <button
                     key={name}
