@@ -93,6 +93,24 @@ describe('StoreProvider', () => {
     expect(started).toEqual(['categories', 'prayers'])
   })
 
+  it('refetches when a write lands mid-hydration so optimistic state is not wiped', async () => {
+    let resolveFirst!: (v: ReturnType<typeof serverState>) => void
+    fetchAll
+      .mockImplementationOnce(() => new Promise<ReturnType<typeof serverState>>(resolve => { resolveFirst = resolve }))
+      .mockImplementationOnce(async () => {
+        const s = serverState()
+        return { ...s, prayers: [...s.prayers, { id: 'x1', text: 'new', categoryId: 'c1', answeredAt: null, createdAt: 5 }] }
+      })
+    ui()
+    // the hydration fetch is in flight; an optimistic write lands meanwhile
+    await userEvent.click(screen.getByText('add'))
+    expect(screen.getByTestId('count')).toHaveTextContent('1') // optimistic x1 only
+    // first fetch resolves with a stale snapshot NOT containing x1
+    await act(async () => { resolveFirst(serverState()) })
+    expect(fetchAll).toHaveBeenCalledTimes(2) // quiesce loop refetched
+    expect(screen.getByTestId('count')).toHaveTextContent('2') // p1 + x1, nothing wiped
+  })
+
   it('sets syncError after a write fails twice, clears on next success', async () => {
     executeWrite.mockRejectedValueOnce(new Error('x')).mockRejectedValueOnce(new Error('x'))
     ui()

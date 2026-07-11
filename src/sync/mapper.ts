@@ -26,7 +26,9 @@ export function rowsToState(rows: {
 }
 
 export type Write =
-  | { table: string; op: 'insert'; values: Record<string, unknown> }
+  // inserts carry the unique key they may conflict on, so executeWrite can run
+  // them as idempotent upserts — a retry after a lost response must not error
+  | { table: string; op: 'insert'; values: Record<string, unknown>; conflictKey: string }
   | { table: string; op: 'update'; match: Record<string, unknown>; values: Record<string, unknown> }
   | { table: string; op: 'delete'; match: Record<string, unknown> }
 
@@ -39,15 +41,15 @@ export function writeForAction(action: Action, userId: string, ctx: { hadLogToda
   switch (action.type) {
     case 'ADD_PRAYER':
       return {
-        table: 'prayers', op: 'insert',
+        table: 'prayers', op: 'insert', conflictKey: 'id',
         values: { id: action.id, user_id: userId, text: action.text, category_id: action.categoryId, created_at: new Date(action.now).toISOString() },
       }
     case 'ADD_CATEGORY':
-      return { table: 'categories', op: 'insert', values: { id: action.id, user_id: userId, name: action.name, hue: action.hue } }
+      return { table: 'categories', op: 'insert', conflictKey: 'id', values: { id: action.id, user_id: userId, name: action.name, hue: action.hue } }
     case 'TOGGLE_PRAYED':
       return ctx.hadLogToday
         ? { table: 'prayer_logs', op: 'delete', match: { prayer_id: action.id, prayed_on: action.today } }
-        : { table: 'prayer_logs', op: 'insert', values: { id: action.logId, user_id: userId, prayer_id: action.id, prayed_on: action.today } }
+        : { table: 'prayer_logs', op: 'insert', conflictKey: 'prayer_id,prayed_on', values: { id: action.logId, user_id: userId, prayer_id: action.id, prayed_on: action.today } }
     case 'MARK_ANSWERED':
       return { table: 'prayers', op: 'update', match: { id: action.id }, values: { answered_at: new Date(action.now).toISOString() } }
     case 'UNDO_ANSWERED':

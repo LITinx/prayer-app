@@ -27,7 +27,9 @@ export async function fetchAll(userId: string): Promise<HydrateData> {
 export async function executeWrite(write: Write): Promise<void> {
   const table = supabase.from(write.table)
   const res =
-    write.op === 'insert' ? await table.insert(write.values)
+    // inserts run as idempotent upserts: if the row landed but the response was
+    // lost, the retry hits the unique key and is ignored instead of erroring
+    write.op === 'insert' ? await table.upsert(write.values, { onConflict: write.conflictKey, ignoreDuplicates: true })
     : write.op === 'update' ? await table.update(write.values).match(write.match)
     : await table.delete().match(write.match)
   if (res.error) throw res.error

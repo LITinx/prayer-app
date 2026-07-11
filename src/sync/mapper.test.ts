@@ -30,15 +30,15 @@ describe('writeForAction', () => {
   const uid = 'u1'
   it('ADD_PRAYER → prayers insert', () => {
     expect(writeForAction({ type: 'ADD_PRAYER', id: 'p1', text: 'hi', categoryId: 'c1', now: 1000 }, uid, { hadLogToday: false }))
-      .toEqual({ table: 'prayers', op: 'insert', values: { id: 'p1', user_id: 'u1', text: 'hi', category_id: 'c1', created_at: new Date(1000).toISOString() } })
+      .toEqual({ table: 'prayers', op: 'insert', conflictKey: 'id', values: { id: 'p1', user_id: 'u1', text: 'hi', category_id: 'c1', created_at: new Date(1000).toISOString() } })
   })
   it('ADD_CATEGORY → categories insert', () => {
     expect(writeForAction({ type: 'ADD_CATEGORY', id: 'c9', name: 'Missions', hue: 180 }, uid, { hadLogToday: false }))
-      .toEqual({ table: 'categories', op: 'insert', values: { id: 'c9', user_id: 'u1', name: 'Missions', hue: 180 } })
+      .toEqual({ table: 'categories', op: 'insert', conflictKey: 'id', values: { id: 'c9', user_id: 'u1', name: 'Missions', hue: 180 } })
   })
   it('TOGGLE_PRAYED (was unchecked) → log insert', () => {
     expect(writeForAction({ type: 'TOGGLE_PRAYED', id: 'p1', today: '2026-07-11', logId: 'l1' }, uid, { hadLogToday: false }))
-      .toEqual({ table: 'prayer_logs', op: 'insert', values: { id: 'l1', user_id: 'u1', prayer_id: 'p1', prayed_on: '2026-07-11' } })
+      .toEqual({ table: 'prayer_logs', op: 'insert', conflictKey: 'prayer_id,prayed_on', values: { id: 'l1', user_id: 'u1', prayer_id: 'p1', prayed_on: '2026-07-11' } })
   })
   it('TOGGLE_PRAYED (was checked) → log delete by prayer+date', () => {
     expect(writeForAction({ type: 'TOGGLE_PRAYED', id: 'p1', today: '2026-07-11', logId: 'l2' }, uid, { hadLogToday: true }))

@@ -37,10 +37,11 @@ describe('fetchAll', () => {
 })
 
 describe('executeWrite', () => {
-  it('performs an insert', async () => {
-    await executeWrite({ table: 'prayers', op: 'insert', values: { id: 'p1' } })
+  it('performs an insert as an idempotent upsert (retry after a lost response must not error)', async () => {
+    await executeWrite({ table: 'prayers', op: 'insert', conflictKey: 'id', values: { id: 'p1' } })
     expect(sb.from).toHaveBeenCalledWith('prayers')
-    expect(sb.__builder.insert).toHaveBeenCalledWith({ id: 'p1' })
+    expect(sb.__builder.upsert).toHaveBeenCalledWith({ id: 'p1' }, { onConflict: 'id', ignoreDuplicates: true })
+    expect(sb.__builder.insert).not.toHaveBeenCalled()
   })
   it('performs an update with match', async () => {
     await executeWrite({ table: 'prayers', op: 'update', match: { id: 'p1' }, values: { answered_at: null } })
@@ -54,7 +55,7 @@ describe('executeWrite', () => {
   })
   it('rejects when supabase returns an error', async () => {
     sb.__result.error = { message: 'boom' }
-    await expect(executeWrite({ table: 'prayers', op: 'insert', values: {} })).rejects.toBeTruthy()
+    await expect(executeWrite({ table: 'prayers', op: 'insert', conflictKey: 'id', values: {} })).rejects.toBeTruthy()
   })
 })
 
