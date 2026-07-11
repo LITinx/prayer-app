@@ -16,6 +16,8 @@ function CurrentScreen() {
     case 'groupDetail': return <GroupDetail />
     case 'answered': return <Answered />
     case 'reminders': return <Reminders />
+    // TODO(Task 6): render the PrayerDetail screen here
+    case 'prayerDetail': return null
   }
 }
 

@@ -1,6 +1,9 @@
 import { render, screen, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../App'
+import { saveState } from '../store/persistence'
+import { demoState } from '../test/fixtures'
+import { todayStr } from '../lib/time'
 
 class FakeRec {
   static instance: FakeRec | null = null
@@ -14,7 +17,10 @@ class FakeRec {
   stop() { this.onend?.() }
 }
 
-beforeEach(() => localStorage.clear())
+beforeEach(() => {
+  localStorage.clear()
+  saveState(demoState(Date.now(), todayStr()))
+})
 afterEach(() => {
   delete (window as unknown as Record<string, unknown>).SpeechRecognition
   FakeRec.instance = null
@@ -34,7 +40,7 @@ describe('VoiceOverlay — typed fallback (no speech support)', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Add to prayer list' }))
     expect(screen.getByText('Strength for my friend Daniel')).toBeInTheDocument()
-    expect(screen.getByText('1 Active')).toBeInTheDocument()
+    expect(screen.getByText('6 Active')).toBeInTheDocument()
   })
 
   it('discard closes without adding', async () => {
@@ -42,7 +48,7 @@ describe('VoiceOverlay — typed fallback (no speech support)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add prayer by voice' }))
     await userEvent.click(screen.getByRole('button', { name: 'Discard' }))
     expect(screen.queryByText('NEW PRAYER REQUEST')).not.toBeInTheDocument()
-    expect(screen.getByText('0 Active')).toBeInTheDocument()
+    expect(screen.getByText('5 Active')).toBeInTheDocument()
   })
 
   it('manually picking a chip overrides auto-categorization', async () => {

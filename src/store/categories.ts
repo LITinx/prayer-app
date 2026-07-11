@@ -1,18 +1,3 @@
-import type { Category } from './types'
-
-export const CATEGORY_HUES: Record<Category, number> = {
-  Health: 12,
-  Family: 300,
-  Gratitude: 150,
-  Guidance: 258,
-  Provision: 55,
-  Friends: 210,
-  Work: 30,
-  Church: 285,
-}
-
-export const CATEGORIES = Object.keys(CATEGORY_HUES) as Category[]
-
 export const DEFAULT_CATEGORIES: { name: string; hue: number }[] = [
   { name: 'Health', hue: 12 },
   { name: 'Family', hue: 300 },
@@ -32,7 +17,11 @@ export function catColor(hue: number) {
   }
 }
 
-/** Hue (multiple of 15°) with the greatest circular distance to every hue in use. */
+/**
+ * Hue (multiple of 15°) with the greatest circular distance to every hue in use.
+ * If all 24 grid hues are already taken it returns a duplicate (hue 0) — a
+ * benign color repeat.
+ */
 export function nextHue(used: number[]): number {
   if (used.length === 0) return 0
   let best = 0

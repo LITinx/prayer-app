@@ -7,9 +7,10 @@ import { todayStr } from '../lib/time'
 
 function Probe() {
   const { state, dispatch } = useStore()
+  const active = state.prayers.filter(p => p.answeredAt === null).length
   return (
     <div>
-      <span data-testid="count">{state.prayers.length}</span>
+      <span data-testid="count">{active}</span>
       <button onClick={() => dispatch({ type: 'MARK_ANSWERED', id: 'p1', now: 1 })}>answer</button>
     </div>
   )
@@ -27,6 +28,6 @@ describe('StoreProvider', () => {
     await userEvent.click(screen.getByText('answer'))
     expect(screen.getByTestId('count')).toHaveTextContent('4')
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)!)
-    expect(saved.prayers).toHaveLength(4)
+    expect(saved.prayers.find((p: { id: string }) => p.id === 'p1').answeredAt).toBe(1)
   })
 })

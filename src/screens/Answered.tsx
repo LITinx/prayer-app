@@ -2,15 +2,17 @@ import { useState } from 'react'
 import { useStore } from '../store/StoreContext'
 import { CategoryTag } from '../components/CategoryTag'
 import { CategoryFilter, presentCategories, filterByCategories } from '../components/CategoryFilter'
-import type { Category } from '../store/types'
 import { relTime } from '../lib/time'
 
 export function Answered() {
   const { state, dispatch } = useStore()
-  const [selectedCats, setSelectedCats] = useState<Category[]>([])
-  const toggleCat = (c: Category) =>
-    setSelectedCats(s => (s.includes(c) ? s.filter(x => x !== c) : [...s, c]))
-  const answered = filterByCategories(state.answered, selectedCats)
+  const [selectedCats, setSelectedCats] = useState<string[]>([])
+  const toggleCat = (id: string) =>
+    setSelectedCats(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]))
+  const allAnswered = state.prayers
+    .filter(p => p.answeredAt !== null)
+    .sort((a, b) => b.answeredAt! - a.answeredAt!)
+  const answered = filterByCategories(allAnswered, selectedCats)
   const now = Date.now()
   return (
     <div className="px-5 pt-1.5 pb-[130px]">
@@ -20,13 +22,13 @@ export function Answered() {
       <div className="bg-[linear-gradient(135deg,oklch(0.72_0.1_150),oklch(0.66_0.12_172))] rounded-lg px-[19px] py-[17px] text-white flex items-center gap-3.5 mb-[22px] shadow-[0_14px_30px_-14px_oklch(0.6_0.12_160_/_.7)]">
         <div className="text-3xl">🌿</div>
         <div>
-          <div className="text-[21px] font-bold leading-none">{state.answered.length} prayers answered</div>
+          <div className="text-[21px] font-bold leading-none">{allAnswered.length} prayers answered</div>
           <div className="text-[12.5px] opacity-85 mt-0.5">Every one remembered</div>
         </div>
       </div>
 
       <div className="mb-3">
-        <CategoryFilter categories={presentCategories(state.answered)} selected={selectedCats} onToggle={toggleCat} />
+        <CategoryFilter categories={presentCategories(allAnswered, state.categories)} selected={selectedCats} onToggle={toggleCat} />
       </div>
 
       {answered.map(a => (
@@ -37,13 +39,17 @@ export function Answered() {
           <div className="w-[26px] h-[26px] rounded-full bg-[oklch(0.66_0.12_158)] flex items-center justify-center text-white text-[13px] font-extrabold flex-none mt-px">
             ✓
           </div>
-          <div className="flex-1">
+          <button
+            onClick={() => dispatch({ type: 'OPEN_PRAYER', id: a.id })}
+            className="flex-1 text-left"
+            aria-label={`View history for "${a.text}"`}
+          >
             <div className="text-[14.5px] font-semibold text-[oklch(0.28_0.03_255)] leading-[1.34]">{a.text}</div>
             <div className="flex items-center gap-2 mt-[9px]">
-              <CategoryTag category={a.category} />
-              <span className="text-[11.5px] text-[oklch(0.6_0.02_250)]">· answered {relTime(a.answeredAt, now)}</span>
+              <CategoryTag category={state.categories.find(c => c.id === a.categoryId)} />
+              <span className="text-[11.5px] text-[oklch(0.6_0.02_250)]">· answered {relTime(a.answeredAt!, now)}</span>
             </div>
-          </div>
+          </button>
           <button
             onClick={() => dispatch({ type: 'UNDO_ANSWERED', id: a.id })}
             aria-label={`Undo — return "${a.text}" to prayer list`}

@@ -1,6 +1,4 @@
-import type { Category } from '../store/types'
-
-export function categorize(text: string): Category {
+export function categorize(text: string): string {
   const t = text.toLowerCase()
   if (/chemo|surgery|health|sick|hospital|test|recover|anx|heal/.test(t)) return 'Health'
   if (/thank|grateful|praise|answered|joy/.test(t)) return 'Gratitude'

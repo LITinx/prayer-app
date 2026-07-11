@@ -3,15 +3,15 @@ import { useStore } from '../store/StoreContext'
 import { StreakCard } from '../components/StreakCard'
 import { PrayerRow } from '../components/PrayerRow'
 import { CategoryFilter, presentCategories, filterByCategories } from '../components/CategoryFilter'
-import type { Category } from '../store/types'
 import { greeting, dateLine } from '../lib/time'
 
 export function Home() {
   const { state } = useStore()
-  const [selectedCats, setSelectedCats] = useState<Category[]>([])
-  const toggleCat = (c: Category) =>
-    setSelectedCats(s => (s.includes(c) ? s.filter(x => x !== c) : [...s, c]))
-  const prayers = filterByCategories(state.prayers, selectedCats)
+  const [selectedCats, setSelectedCats] = useState<string[]>([])
+  const toggleCat = (id: string) =>
+    setSelectedCats(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]))
+  const active = state.prayers.filter(p => p.answeredAt === null)
+  const prayers = filterByCategories(active, selectedCats)
   return (
     <div className="px-5 pt-1.5 pb-[130px]">
       <div className="flex justify-between items-start mb-5">
@@ -29,17 +29,17 @@ export function Home() {
       <div className="flex items-baseline justify-between pb-[9px] mb-0.5 border-b-2 border-[oklch(0.24_0.03_258)]">
         <div className="text-[19px] font-semibold text-[oklch(0.22_0.03_258)]">Prayer List</div>
         <div className="text-[9.5px] font-bold tracking-[.1em] uppercase text-[oklch(0.55_0.06_250)] whitespace-nowrap">
-          {state.prayers.length} Active
+          {active.length} Active
         </div>
       </div>
-      {state.prayers.length === 0 ? (
+      {active.length === 0 ? (
         <p className="pt-7 text-center text-[13.5px] text-[oklch(0.55_0.03_250)]">
           No prayers yet — tap the mic to add one 🎙️
         </p>
       ) : (
         <>
           <div className="pt-2.5 pb-1">
-            <CategoryFilter categories={presentCategories(state.prayers)} selected={selectedCats} onToggle={toggleCat} />
+            <CategoryFilter categories={presentCategories(active, state.categories)} selected={selectedCats} onToggle={toggleCat} />
           </div>
           <div className="border-y border-[oklch(0.84_0.025_245)]">
             {prayers.map((p, i) => (

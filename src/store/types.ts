@@ -1,23 +1,23 @@
-export type Category =
-  | 'Health' | 'Family' | 'Gratitude' | 'Guidance'
-  | 'Provision' | 'Friends' | 'Work' | 'Church'
+export interface Category {
+  id: string
+  name: string
+  hue: number
+}
 
-export type Screen = 'home' | 'groups' | 'groupDetail' | 'answered' | 'reminders'
+export type Screen = 'home' | 'groups' | 'groupDetail' | 'answered' | 'reminders' | 'prayerDetail'
 
 export interface Prayer {
   id: string
   text: string
-  category: Category
-  streak: number
-  prayedToday: boolean
+  categoryId: string
+  answeredAt: number | null // epoch ms; null = active
+  createdAt: number
 }
 
-export interface AnsweredPrayer {
+export interface PrayerLog {
   id: string
-  text: string
-  category: Category
-  answeredAt: number // epoch ms
-  streak?: number // streak at the time it was answered; absent on entries stored before undo existed
+  prayerId: string
+  prayedOn: string // YYYY-MM-DD
 }
 
 export interface Group {
@@ -36,14 +36,9 @@ export interface FeedItem {
   initials: string
   agoLabel: string
   text: string
-  category: Category
+  category: string // display name snapshot — demo data / stage-2 sharing
   praying: number
   prayed: boolean
-}
-
-export interface AppStreak {
-  count: number
-  lastPrayedDate: string // YYYY-MM-DD
 }
 
 export interface Profile {
@@ -54,11 +49,12 @@ export interface Profile {
 export interface AppState {
   screen: Screen
   activeGroupId: string | null
-  lastVisitDate: string // YYYY-MM-DD
+  activePrayerId: string | null
   prayers: Prayer[]
-  answered: AnsweredPrayer[]
+  logs: PrayerLog[]
+  categories: Category[]
   groups: Group[]
   feeds: Record<string, FeedItem[]>
-  appStreak: AppStreak
   profile: Profile
+  syncError: boolean
 }

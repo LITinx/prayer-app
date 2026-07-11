@@ -2,8 +2,16 @@ import { useState } from 'react'
 import type { Category, FeedItem } from '../store/types'
 import { useStore } from '../store/StoreContext'
 import { CategoryTag } from '../components/CategoryTag'
-import { CategoryFilter, presentCategories, filterByCategories } from '../components/CategoryFilter'
+import { CategoryFilter } from '../components/CategoryFilter'
+import { DEFAULT_CATEGORIES } from '../store/categories'
 import { Avatar } from '../components/Avatar'
+
+// Feed items carry a plain category name (not a categoryId). Build a throwaway
+// Category entity keyed by name so the shared chip/tag UI can render them,
+// using the default palette hues (fallback 258 for unknown names).
+function feedCategory(name: string): Category {
+  return { id: name, name, hue: DEFAULT_CATEGORIES.find(c => c.name === name)?.hue ?? 258 }
+}
 
 function FeedCard({ item, groupId }: { item: FeedItem; groupId: string }) {
   const { dispatch } = useStore()
@@ -16,7 +24,7 @@ function FeedCard({ item, groupId }: { item: FeedItem; groupId: string }) {
       </div>
       <div className="text-[14.5px] text-[oklch(0.28_0.03_255)] leading-[1.4] mb-3">{item.text}</div>
       <div className="flex items-center justify-between">
-        <CategoryTag category={item.category} />
+        <CategoryTag category={feedCategory(item.category)} />
         <button
           onClick={() => dispatch({ type: 'TOGGLE_FEED_PRAY', groupId, feedId: item.id })}
           className={`text-[12.5px] font-bold px-[13px] py-[7px] rounded-[5px] ${
@@ -34,13 +42,17 @@ function FeedCard({ item, groupId }: { item: FeedItem; groupId: string }) {
 
 export function GroupDetail() {
   const { state, dispatch } = useStore()
-  const [selectedCats, setSelectedCats] = useState<Category[]>([])
-  const toggleCat = (c: Category) =>
-    setSelectedCats(s => (s.includes(c) ? s.filter(x => x !== c) : [...s, c]))
+  const [selectedCats, setSelectedCats] = useState<string[]>([])
+  const toggleCat = (name: string) =>
+    setSelectedCats(s => (s.includes(name) ? s.filter(x => x !== name) : [...s, name]))
   const group = state.groups.find(g => g.id === state.activeGroupId)
   if (!group) return null
   const fullFeed = state.feeds[group.id] ?? []
-  const feed = filterByCategories(fullFeed, selectedCats)
+  // Local, name-based filtering over feed items (their category is a string).
+  const names = [...new Set(fullFeed.map(f => f.category))].sort((a, b) => a.localeCompare(b))
+  const chips = names.map(feedCategory)
+  const active = selectedCats.filter(name => names.includes(name))
+  const feed = active.length ? fullFeed.filter(f => active.includes(f.category)) : fullFeed
   return (
     <div className="px-5 pt-1.5 pb-[130px]">
       <button
@@ -72,7 +84,7 @@ export function GroupDetail() {
 
       <div className="text-sm font-bold text-[oklch(0.3_0.03_255)] mb-2">Shared requests</div>
       <div className="mb-3">
-        <CategoryFilter categories={presentCategories(fullFeed)} selected={selectedCats} onToggle={toggleCat} />
+        <CategoryFilter categories={chips} selected={selectedCats} onToggle={toggleCat} />
       </div>
       {feed.map(f => (
         <FeedCard key={f.id} item={f} groupId={group.id} />

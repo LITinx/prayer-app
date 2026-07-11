@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Category } from '../store/types'
 import { useStore } from '../store/StoreContext'
-import { CATEGORIES, catColor, CATEGORY_HUES } from '../store/categories'
+import { catColor } from '../store/categories'
 import { useSpeech } from './useSpeech'
 import { categorize } from './categorize'
 
@@ -14,11 +13,11 @@ const EQ_BARS = [
 ]
 
 export function VoiceOverlay({ onClose }: { onClose: () => void }) {
-  const { dispatch } = useStore()
+  const { state, dispatch } = useStore()
   const speech = useSpeech()
   const [stage, setStage] = useState<'listening' | 'review'>(speech.supported ? 'listening' : 'review')
   const [text, setText] = useState('')
-  const [category, setCategory] = useState<Category>('Guidance')
+  const [categoryId, setCategoryId] = useState<string | null>(null)
   const [picked, setPicked] = useState(false)
   const wasListeningRef = useRef(false)
 
@@ -52,8 +51,11 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
 
   // auto-categorize until the user picks a chip manually
   useEffect(() => {
-    if (!picked) setCategory(categorize(text))
-  }, [text, picked])
+    if (picked) return
+    const suggested = categorize(text).toLowerCase()
+    const match = state.categories.find(c => c.name.toLowerCase() === suggested)
+    setCategoryId(match ? match.id : null)
+  }, [text, picked, state.categories])
 
   // Escape dismisses the sheet
   useEffect(() => {
@@ -71,8 +73,8 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
 
   function add() {
     const t = text.trim()
-    if (!t) return
-    dispatch({ type: 'ADD_PRAYER', id: crypto.randomUUID(), text: t, category })
+    if (!t || !categoryId) return
+    dispatch({ type: 'ADD_PRAYER', id: crypto.randomUUID(), text: t, categoryId, now: Date.now() })
     onClose()
   }
 
@@ -139,22 +141,22 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
             </div>
             <div className="text-[12.5px] font-bold text-[oklch(0.5_0.03_255)] mb-2.5">Suggested category</div>
             <div className="flex flex-wrap gap-2 mb-[22px]">
-              {CATEGORIES.map(name => {
-                const active = name === category
-                const c = catColor(CATEGORY_HUES[name])
+              {state.categories.map(c => {
+                const active = c.id === categoryId
+                const col = catColor(c.hue)
                 return (
                   <button
-                    key={name}
+                    key={c.id}
                     aria-pressed={active}
-                    onClick={() => { setCategory(name); setPicked(true) }}
+                    onClick={() => { setCategoryId(c.id); setPicked(true) }}
                     className="inline-flex items-center text-[13px] font-bold px-[13px] py-2 rounded-md transition-all"
-                    style={active ? { background: c.fg, color: '#fff' } : { background: c.bg, color: c.fg }}
+                    style={active ? { background: col.fg, color: '#fff' } : { background: col.bg, color: col.fg }}
                   >
                     <span
                       className="w-[7px] h-[7px] rounded-full mr-[7px] inline-block"
-                      style={{ background: active ? '#fff' : c.dot }}
+                      style={{ background: active ? '#fff' : col.dot }}
                     />
-                    {name}
+                    {c.name}
                   </button>
                 )
               })}
@@ -168,7 +170,7 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
               </button>
               <button
                 onClick={add}
-                disabled={!text.trim()}
+                disabled={!text.trim() || !categoryId}
                 className="flex-1 text-center py-3.5 rounded-2xl bg-[linear-gradient(140deg,oklch(0.64_0.13_250),oklch(0.58_0.15_264))] text-white font-bold text-sm shadow-[0_10px_22px_-8px_oklch(0.55_0.15_255_/_.7)] disabled:opacity-50"
               >
                 Add to prayer list

@@ -17,7 +17,7 @@ describe('Home', () => {
   it('renders greeting, streak card, and seeded prayer list', () => {
     ui()
     expect(screen.getByText(/Good (morning|afternoon|evening), Anna/)).toBeInTheDocument()
-    expect(screen.getByText('7-day streak')).toBeInTheDocument()
+    expect(screen.getByText('12-day streak')).toBeInTheDocument()
     expect(screen.getByText('1 of 5 prayers lifted today')).toBeInTheDocument()
     expect(screen.getByText(/Grandma Ruth's recovery/)).toBeInTheDocument()
     expect(screen.getByText('5 Active')).toBeInTheDocument()

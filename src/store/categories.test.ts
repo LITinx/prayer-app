@@ -1,4 +1,4 @@
-import { catColor, avColor, CATEGORIES, DEFAULT_CATEGORIES, nextHue } from './categories'
+import { catColor, avColor, DEFAULT_CATEGORIES, nextHue } from './categories'
 
 describe('catColor (hue-based)', () => {
   it('builds the oklch trio from a hue number', () => {
@@ -7,15 +7,6 @@ describe('catColor (hue-based)', () => {
       bg: 'oklch(0.95 0.045 12)',
       dot: 'oklch(0.62 0.15 12)',
     })
-  })
-})
-
-describe('CATEGORIES', () => {
-  it('lists all eight categories in design order', () => {
-    expect(CATEGORIES).toEqual([
-      'Health', 'Family', 'Gratitude', 'Guidance',
-      'Provision', 'Friends', 'Work', 'Church',
-    ])
   })
 })
 

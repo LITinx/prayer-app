@@ -2,15 +2,16 @@ import type { AppState } from './types'
 
 export const STORAGE_KEY = 'prayer-app-state-v1'
 
-export function seedState(_now: number, today: string): AppState {
+export function seedState(_now: number, _today: string): AppState {
   return {
     screen: 'home',
     activeGroupId: null,
-    lastVisitDate: today,
-    appStreak: { count: 0, lastPrayedDate: today },
+    activePrayerId: null,
     profile: { name: 'Anna', initials: 'AR' },
+    categories: [],
     prayers: [],
-    answered: [],
+    logs: [],
+    syncError: false,
     groups: [
       { id: 'g1', name: 'Morning Grace', emoji: '🌅', members: 6, requests: 3, prayingNow: 4, avatars: ['JM', 'SK', 'DL', 'RP'] },
     ],
@@ -29,25 +30,8 @@ export function loadState(now: number, today: string): AppState {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return seedState(now, today)
     const s = JSON.parse(raw) as AppState
-    if (
-      !Array.isArray(s.prayers) ||
-      !Array.isArray(s.answered) ||
-      !Array.isArray(s.groups) ||
-      !s.feeds || typeof s.feeds !== 'object' ||
-      !s.appStreak || typeof s.appStreak.count !== 'number' || typeof s.appStreak.lastPrayedDate !== 'string' ||
-      !s.profile || typeof s.profile.name !== 'string' ||
-      typeof s.lastVisitDate !== 'string'
-    ) {
+    if (!Array.isArray(s.prayers) || !Array.isArray(s.logs) || !Array.isArray(s.categories)) {
       return seedState(now, today)
-    }
-    if (s.lastVisitDate !== today) {
-      return {
-        ...s,
-        lastVisitDate: today,
-        screen: 'home',
-        activeGroupId: null,
-        prayers: s.prayers.map(p => ({ ...p, prayedToday: false })),
-      }
     }
     return s
   } catch {
