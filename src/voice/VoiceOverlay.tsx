@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../store/StoreContext'
-import { catColor } from '../store/categories'
+import { catColor, nextHue } from '../store/categories'
 import { useSpeech } from './useSpeech'
 import { categorize } from './categorize'
 
@@ -19,6 +19,8 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
   const [text, setText] = useState('')
   const [categoryId, setCategoryId] = useState<string | null>(null)
   const [picked, setPicked] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [newName, setNewName] = useState('')
   const wasListeningRef = useRef(false)
 
   // start listening on mount; cleanup stops the mic (StrictMode remount restarts it)
@@ -81,6 +83,21 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
   function close() {
     speech.stop()
     onClose()
+  }
+
+  function createCategory() {
+    const name = newName.trim()
+    if (!name) return
+    const existing = state.categories.find(c => c.name.toLowerCase() === name.toLowerCase())
+    if (existing) {
+      setCategoryId(existing.id); setPicked(true); setCreating(false); setNewName(''); return
+    }
+    const id = crypto.randomUUID()
+    dispatch({ type: 'ADD_CATEGORY', id, name, hue: nextHue(state.categories.map(c => c.hue)) })
+    setCategoryId(id)
+    setPicked(true)
+    setCreating(false)
+    setNewName('')
   }
 
   return (
@@ -160,6 +177,27 @@ export function VoiceOverlay({ onClose }: { onClose: () => void }) {
                   </button>
                 )
               })}
+              {creating ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <input
+                    value={newName}
+                    onChange={e => setNewName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') createCategory() }}
+                    placeholder="Category name"
+                    autoFocus
+                    className="text-[13px] font-bold px-3 py-2 rounded-md border border-[oklch(0.85_0.03_245)] outline-none w-[140px]"
+                  />
+                  <button onClick={createCategory} disabled={!newName.trim()}
+                    className="text-[13px] font-bold px-3 py-2 rounded-md bg-[oklch(0.62_0.13_250)] text-white disabled:opacity-50">
+                    Create
+                  </button>
+                </span>
+              ) : (
+                <button onClick={() => setCreating(true)}
+                  className="inline-flex items-center text-[13px] font-bold px-[13px] py-2 rounded-md border-[1.5px] border-dashed border-[oklch(0.78_0.05_245)] text-[oklch(0.55_0.1_245)]">
+                  + New
+                </button>
+              )}
             </div>
             <div className="flex gap-2.5">
               <button

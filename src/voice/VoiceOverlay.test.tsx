@@ -110,4 +110,17 @@ describe('VoiceOverlay — listening flow', () => {
     expect(screen.getByText('NEW PRAYER REQUEST')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('What would you like to pray for?')).toHaveValue('Peace for today')
   })
+
+  it('creates a custom category inline and selects it', async () => {
+    render(<App />)
+    await userEvent.click(screen.getByRole('button', { name: 'Add prayer by voice' }))
+    await userEvent.type(screen.getByPlaceholderText('What would you like to pray for?'), 'For the missionaries')
+    await userEvent.click(screen.getByRole('button', { name: '+ New' }))
+    await userEvent.type(screen.getByPlaceholderText('Category name'), 'Missions')
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }))
+    expect(screen.getByRole('button', { name: /Missions/, pressed: true })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Add to prayer list' }))
+    expect(screen.getByText('For the missionaries')).toBeInTheDocument()
+    expect(screen.getAllByText('Missions').length).toBeGreaterThan(0) // filter chip + tag on the new row
+  })
 })
