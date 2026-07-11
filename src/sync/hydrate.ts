@@ -5,6 +5,7 @@ import { rowsToState } from './mapper'
 import type { CategoryRow, LogRow, PrayerRow, ProfileRow, Write } from './mapper'
 import { readLegacyState, clearLegacyState } from '../store/persistence'
 import { prevDay } from '../lib/history'
+import { todayStr } from '../lib/time'
 
 export async function fetchAll(userId: string): Promise<HydrateData> {
   const [profile, categories, prayers, logs] = await Promise.all([
@@ -33,9 +34,11 @@ export async function executeWrite(write: Write): Promise<void> {
 }
 
 /**
- * One-time import of the pre-account localStorage snapshot. Runs before the
- * caller decides to fetch; only inserts when a legacy snapshot exists. The
- * caller only invokes this when the server has no prayers yet.
+ * Import of the pre-account localStorage snapshot. Re-runnable: the caller
+ * invokes it whenever a legacy snapshot exists. Both writes are idempotent
+ * upserts (prayers on id, logs on prayer_id+prayed_on), so a partial failure
+ * keeps the snapshot and the next run fills in only what's missing. The
+ * legacy key is cleared only after both statements succeed.
  */
 export async function importLegacy(userId: string, categories: Category[], today: string): Promise<void> {
   const legacy = readLegacyState()
@@ -65,8 +68,8 @@ export async function importLegacy(userId: string, categories: Category[], today
     }
   }
   for (const a of legacy.answered) {
-    // backfill answered streaks ending the day they were answered
-    let d = new Date(a.answeredAt).toISOString().slice(0, 10)
+    // backfill answered streaks ending the (local) day they were answered
+    let d = todayStr(new Date(a.answeredAt))
     for (let i = 0; i < (a.streak ?? 0); i++) {
       logRows.push({ id: crypto.randomUUID(), user_id: userId, prayer_id: a.id, prayed_on: d })
       d = prevDay(d)
@@ -74,11 +77,11 @@ export async function importLegacy(userId: string, categories: Category[], today
   }
 
   if (prayerRows.length) {
-    const r1 = await supabase.from('prayers').insert(prayerRows)
+    const r1 = await supabase.from('prayers').upsert(prayerRows, { onConflict: 'id', ignoreDuplicates: true })
     if (r1.error) throw r1.error
   }
   if (logRows.length) {
-    const r2 = await supabase.from('prayer_logs').insert(logRows)
+    const r2 = await supabase.from('prayer_logs').upsert(logRows, { onConflict: 'prayer_id,prayed_on', ignoreDuplicates: true })
     if (r2.error) throw r2.error
   }
   clearLegacyState()
