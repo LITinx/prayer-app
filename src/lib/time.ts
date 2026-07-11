@@ -5,12 +5,6 @@ export function todayStr(d: Date = new Date()): string {
   return `${y}-${m}-${day}`
 }
 
-export function isYesterday(dateStr: string, today: string): boolean {
-  const t = new Date(`${today}T00:00:00`)
-  t.setDate(t.getDate() - 1)
-  return todayStr(t) === dateStr
-}
-
 export function greeting(d: Date = new Date()): string {
   const h = d.getHours()
   if (h < 12) return 'Good morning'

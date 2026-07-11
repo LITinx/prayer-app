@@ -1,7 +1,8 @@
 import type { AppState } from './types'
 
 export const LEGACY_KEY = 'prayer-app-state-v1'
-export const cacheKey = (userId: string) => `prayer-app-cache-v2:${userId}`
+export const CACHE_PREFIX = 'prayer-app-cache-v2:'
+export const cacheKey = (userId: string) => `${CACHE_PREFIX}${userId}`
 
 /** Legacy (pre-account) localStorage shape — read once for the first-sign-in import. */
 export interface LegacyState {

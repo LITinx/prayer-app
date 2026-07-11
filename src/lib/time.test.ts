@@ -1,23 +1,10 @@
-import { todayStr, isYesterday, greeting, dateLine, relTime } from './time'
+import { todayStr, greeting, dateLine, relTime } from './time'
 
 const DAY = 86_400_000
 
 describe('todayStr', () => {
   it('formats local date as YYYY-MM-DD', () => {
     expect(todayStr(new Date(2026, 6, 4, 23, 30))).toBe('2026-07-04')
-  })
-})
-
-describe('isYesterday', () => {
-  it('true for the day before', () => {
-    expect(isYesterday('2026-07-03', '2026-07-04')).toBe(true)
-  })
-  it('false for two days before and for same day', () => {
-    expect(isYesterday('2026-07-02', '2026-07-04')).toBe(false)
-    expect(isYesterday('2026-07-04', '2026-07-04')).toBe(false)
-  })
-  it('handles month boundaries', () => {
-    expect(isYesterday('2026-06-30', '2026-07-01')).toBe(true)
   })
 })
 

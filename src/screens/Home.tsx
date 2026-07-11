@@ -5,6 +5,7 @@ import { PrayerRow } from '../components/PrayerRow'
 import { CategoryFilter, presentCategories, filterByCategories } from '../components/CategoryFilter'
 import { greeting, dateLine } from '../lib/time'
 import { supabase } from '../lib/supabase'
+import { CACHE_PREFIX } from '../store/persistence'
 
 export function Home() {
   const { state } = useStore()
@@ -25,7 +26,7 @@ export function Home() {
     setMenuOpen(false)
     // drop every user's cached state so nothing lingers on a shared device
     for (const key of Object.keys(localStorage)) {
-      if (key.startsWith('prayer-app-cache-v2:')) localStorage.removeItem(key)
+      if (key.startsWith(CACHE_PREFIX)) localStorage.removeItem(key)
     }
     // the SIGNED_OUT auth event unmounts the app shell; a network failure
     // here must not surface as an unhandled rejection

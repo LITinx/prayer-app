@@ -5,7 +5,9 @@ description: Build/launch/drive recipe for verifying prayer-app changes in a rea
 
 # Verifying prayer-app
 
-React 19 + Vite PWA, mobile-viewport (430px), state in localStorage (`prayer-app-state-v1`).
+React 19 + Vite PWA, mobile-viewport (430px). Data lives in Supabase, per-user;
+localStorage only holds a per-user cache (`prayer-app-cache-v2:<userId>`) plus,
+transiently, the pre-account legacy snapshot (`prayer-app-state-v1`).
 
 ## Launch
 
@@ -25,12 +27,14 @@ const page = await browser.newPage({ viewport: { width: 430, height: 900 } })
 
 ## Gotchas
 
+- **Requires Supabase credentials**: the app reads `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from `.env.local` (see `.env.example`) and needs a signed-in Google session to reach the app shell. Without both, or before completing OAuth, the sign-in screen is the expected — and correct — first render; don't treat it as a failure.
+- **Sign-in is not automatable headlessly**: Google OAuth requires a real, headed browser and manual click-through. Headless verification is limited to the sign-in screen itself unless a session already exists (e.g. an already-authenticated persistent browser profile).
+- **Cache key is per-user**: the local cache lives at `prayer-app-cache-v2:<userId>`, not a single fixed key. The pre-account key `prayer-app-state-v1` is legacy — it's only read once (to import into Supabase on first sign-in of a fresh account) and is not the source of truth otherwise.
 - **Mic FAB never settles**: `animate-mic-float` runs forever, so `page.click('button[aria-label="Add prayer by voice"]')` times out on the stability check. Use `{ force: true }`.
 - **Ambiguous "Answered" text**: every PrayerRow has an "Answered" button (uppercase-styled, accessible name "Mark … as answered"), and the bottom-nav buttons are named `Prayers`, `Groups`, `Answered`, `Reminders` (SVG icons, label text only). Scope nav clicks to the nav container or use exact accessible names.
-- **Screen persists across reload**: the app restores the last screen from localStorage (same day), so after `page.reload()` you land where you were — don't wait for the Home heading.
+- **Screen persists across reload**: the app restores the last screen from the per-user cache, so after `page.reload()` you land where you were — don't wait for the Home heading.
 - **No speech API in headless Chrome**: the voice overlay opens straight in typed-fallback review mode; fill the "What would you like to pray for?" textarea and click "Add to prayer list".
-- Fresh seed = empty prayers/answered, one group (Morning Grace). Seed legacy/odd states by writing `prayer-app-state-v1` via `page.evaluate` then reloading.
 
 ## Flows worth driving
 
-Add prayer (typed fallback) → mark prayed → mark answered → Undo on Answered (streak chip `· ND` should survive) → category filter chips on Home/Answered/group feed → reload for persistence.
+Sign in with Google → add prayer (typed fallback) → mark prayed → mark answered → Undo on Answered (streak chip `· ND` should survive) → category filter chips on Home/Answered/group feed → open a prayer to view its history/calendar → reload for persistence → sign out clears the per-user cache.
