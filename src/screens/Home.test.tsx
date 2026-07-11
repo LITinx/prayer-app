@@ -1,10 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { StoreProvider } from '../store/StoreContext'
-import { saveCache } from '../store/persistence'
+import { saveCache, cacheKey } from '../store/persistence'
 import { demoState } from '../test/fixtures'
 import { todayStr } from '../lib/time'
 import { Home } from './Home'
+import { supabase } from '../lib/supabase'
 
 vi.mock('../sync/hydrate', () => ({
   executeWrite: vi.fn(async () => {}),
@@ -12,7 +13,9 @@ vi.mock('../sync/hydrate', () => ({
   importLegacy: vi.fn(async () => {}),
 }))
 
-vi.mock('../lib/supabase', () => ({ supabase: { auth: { signOut: vi.fn() } } }))
+vi.mock('../lib/supabase', () => ({
+  supabase: { auth: { signOut: vi.fn(async () => ({ error: null })) } },
+}))
 
 const ui = () => render(<StoreProvider userId="local"><Home /></StoreProvider>)
 
@@ -89,5 +92,30 @@ describe('Home', () => {
     ui()
     await userEvent.click(screen.getByRole('button', { name: 'Account menu' }))
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument()
+  })
+
+  it('sign out clears the cached state and signs out of supabase', async () => {
+    ui()
+    expect(localStorage.getItem(cacheKey('local'))).not.toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'Account menu' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Sign out' }))
+    expect(supabase.auth.signOut).toHaveBeenCalledTimes(1)
+    expect(localStorage.getItem(cacheKey('local'))).toBeNull()
+  })
+
+  it('second avatar tap closes the menu', async () => {
+    ui()
+    await userEvent.click(screen.getByRole('button', { name: 'Account menu' }))
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Account menu' }))
+    expect(screen.queryByRole('button', { name: 'Sign out' })).not.toBeInTheDocument()
+  })
+
+  it('Escape closes the menu', async () => {
+    ui()
+    await userEvent.click(screen.getByRole('button', { name: 'Account menu' }))
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('button', { name: 'Sign out' })).not.toBeInTheDocument()
   })
 })

@@ -30,7 +30,7 @@ function SyncIndicator() {
     <div
       role="status"
       title="Changes not synced yet"
-      className="fixed top-[max(14px,env(safe-area-inset-top))] right-4 z-30 w-2.5 h-2.5 rounded-full bg-[oklch(0.7_0.18_60)]"
+      className="absolute top-[max(14px,env(safe-area-inset-top))] left-4 z-30 w-2.5 h-2.5 rounded-full bg-[oklch(0.7_0.18_60)] pointer-events-none"
     />
   )
 }
@@ -38,7 +38,7 @@ function SyncIndicator() {
 function Shell() {
   const [voiceOpen, setVoiceOpen] = useState(false)
   return (
-    <div className="mx-auto max-w-[430px] min-h-dvh bg-[linear-gradient(180deg,oklch(0.985_0.008_235)_0%,oklch(0.975_0.012_235)_100%)] shadow-[0_0_60px_oklch(0.6_0.08_245_/_.25)] pt-[max(12px,env(safe-area-inset-top))]">
+    <div className="relative mx-auto max-w-[430px] min-h-dvh bg-[linear-gradient(180deg,oklch(0.985_0.008_235)_0%,oklch(0.975_0.012_235)_100%)] shadow-[0_0_60px_oklch(0.6_0.08_245_/_.25)] pt-[max(12px,env(safe-area-inset-top))]">
       <SyncIndicator />
       <CurrentScreen />
       <BottomNav onVoice={() => setVoiceOpen(true)} />

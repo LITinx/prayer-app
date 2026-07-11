@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useStore } from '../store/StoreContext'
 import { StreakCard } from '../components/StreakCard'
 import { PrayerRow } from '../components/PrayerRow'
@@ -12,6 +12,26 @@ export function Home() {
   const [menuOpen, setMenuOpen] = useState(false)
   const toggleCat = (id: string) =>
     setSelectedCats(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]))
+
+  // Escape dismisses the account menu (same pattern as VoiceOverlay)
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [menuOpen])
+
+  function signOut() {
+    setMenuOpen(false)
+    // drop every user's cached state so nothing lingers on a shared device
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith('prayer-app-cache-v2:')) localStorage.removeItem(key)
+    }
+    // the SIGNED_OUT auth event unmounts the app shell; a network failure
+    // here must not surface as an unhandled rejection
+    supabase.auth.signOut().catch(() => {})
+  }
+
   const active = state.prayers.filter(p => p.answeredAt === null)
   const prayers = filterByCategories(active, selectedCats)
   return (
@@ -33,7 +53,7 @@ export function Home() {
           </button>
           {menuOpen && (
             <button
-              onClick={() => supabase.auth.signOut()}
+              onClick={signOut}
               className="absolute right-0 top-[48px] z-10 whitespace-nowrap bg-white border border-[oklch(0.9_0.015_240)] rounded-lg px-4 py-2.5 text-[13px] font-bold text-[oklch(0.45_0.03_255)] shadow-[0_8px_20px_-8px_oklch(0.5_0.06_250_/_.5)]"
             >
               Sign out

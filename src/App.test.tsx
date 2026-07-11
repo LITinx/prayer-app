@@ -16,7 +16,7 @@ vi.mock('./sync/hydrate', () => ({
 
 // SignIn (rendered when signed out) imports the real supabase client, which
 // throws in tests without env vars — stub it out here too.
-vi.mock('./lib/supabase', () => ({ supabase: { auth: { signOut: vi.fn() } } }))
+vi.mock('./lib/supabase', () => ({ supabase: { auth: { signOut: vi.fn(async () => ({ error: null })) } } }))
 
 beforeEach(() => {
   localStorage.clear()
@@ -48,6 +48,21 @@ describe('App navigation', () => {
   it('shows the voice FAB', () => {
     render(<App />)
     expect(screen.getByRole('button', { name: 'Add prayer by voice' })).toBeInTheDocument()
+  })
+})
+
+describe('Sync indicator', () => {
+  it('appears once hydration fails, anchored inside the app column', async () => {
+    render(<App />)
+    // hydration hasn't settled yet — no dot
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    // mocked fetchAll rejects → SYNC_ERROR → dot renders
+    const dot = await screen.findByRole('status')
+    expect(dot).toHaveAttribute('title', 'Changes not synced yet')
+    // anchored to the app column (absolute in a relative wrapper), taps pass through
+    expect(dot.className).toContain('absolute')
+    expect(dot.className).toContain('left-4')
+    expect(dot.className).toContain('pointer-events-none')
   })
 })
 

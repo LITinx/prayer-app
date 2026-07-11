@@ -15,7 +15,7 @@ vi.mock('../auth/useSession', () => ({ useSession: () => ({ user: { id: 'local' 
 
 // SignIn (imported by App) pulls in the real supabase client, which throws
 // in tests without env vars — stub it out even though it's never rendered here.
-vi.mock('../lib/supabase', () => ({ supabase: { auth: { signOut: vi.fn() } } }))
+vi.mock('../lib/supabase', () => ({ supabase: { auth: { signOut: vi.fn(async () => ({ error: null })) } } }))
 
 class FakeRec {
   static instance: FakeRec | null = null
