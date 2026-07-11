@@ -2459,3 +2459,7 @@ git commit -m "docs: supabase setup instructions and verify-skill notes"
 - Type consistency: `Action` union defined once in T4 Step 5 and consumed by T7 mapper; `HydrateData` shared; `Write` type defined in mapper and used by hydrate/StoreContext; `LegacyState` in persistence used by hydrate import.
 - Known judgment call: interim `seedState` bridge in T4 Step 8 is deleted in T5 — kept because T4 must end green without pulling T5's content forward.
 ```
+
+## Amendments during execution
+
+- Task 1 schema hardened post-review (commit a0a9426): `full_name` trimmed with empty-string fallback to 'Friend'; profiles RLS split into select/update-only policies (no user insert/delete); hue check tightened to 0–359; comment documenting reliance on Supabase default grants.
