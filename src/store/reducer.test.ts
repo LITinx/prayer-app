@@ -40,6 +40,18 @@ describe('TOGGLE_PRAYED (log-based)', () => {
     const s = reducer(base(), { type: 'TOGGLE_PRAYED', id: 'nope', today, logId: 'log-x' })
     expect(s).toEqual(base())
   })
+  it('is idempotent across StrictMode double runs — same action from same base cannot duplicate logs', () => {
+    const a = { type: 'TOGGLE_PRAYED', id: 'p1', today, logId: 'log-x' } as const
+    const s1 = reducer(base(), a)
+    const s2 = reducer(base(), a)
+    expect(s1.logs.filter(l => l.prayerId === 'p1' && l.prayedOn === today)).toEqual([
+      { id: 'log-x', prayerId: 'p1', prayedOn: today },
+    ])
+    expect(s2.logs.filter(l => l.prayerId === 'p1' && l.prayedOn === today)).toEqual([
+      { id: 'log-x', prayerId: 'p1', prayedOn: today },
+    ])
+    expect(s1).toEqual(s2)
+  })
 })
 
 describe('MARK_ANSWERED / UNDO_ANSWERED', () => {
@@ -53,6 +65,11 @@ describe('MARK_ANSWERED / UNDO_ANSWERED', () => {
     let s = reducer(base(), { type: 'MARK_ANSWERED', id: 'p2', now })
     s = reducer(s, { type: 'UNDO_ANSWERED', id: 'p2' })
     expect(s.prayers.find(x => x.id === 'p2')!.answeredAt).toBeNull()
+  })
+  it('mark-then-undo preserves the prayer’s log history', () => {
+    let s = reducer(base(), { type: 'MARK_ANSWERED', id: 'p2', now })
+    s = reducer(s, { type: 'UNDO_ANSWERED', id: 'p2' })
+    expect(s.logs.filter(l => l.prayerId === 'p2')).toHaveLength(3)
   })
   it('ignores unknown ids', () => {
     expect(reducer(base(), { type: 'MARK_ANSWERED', id: 'nope', now })).toEqual(base())
