@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useStore } from '../store/StoreContext'
 import { CategoryTag } from '../components/CategoryTag'
 import { daysPrayed, monthMarks } from '../lib/history'
@@ -22,6 +22,13 @@ export function PrayerDetail() {
   const now = new Date()
   const [cursor, setCursor] = useState({ year: now.getFullYear(), month: now.getMonth() + 1 })
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  // Escape dismisses the delete confirm (same pattern as Home's account menu)
+  useEffect(() => {
+    if (!confirmingDelete) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setConfirmingDelete(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [confirmingDelete])
   const prayer = state.prayers.find(p => p.id === state.activePrayerId)
   if (!prayer || state.screen !== 'prayerDetail') return null
   const category = state.categories.find(c => c.id === prayer.categoryId)
@@ -86,6 +93,7 @@ export function PrayerDetail() {
                 aria-label={
                   marks.has(day) ? `${day}, prayed — tap to unmark` : `${day} — tap to mark prayed`
                 }
+                aria-pressed={marks.has(day)}
                 className={`mx-auto w-8 h-8 rounded-full flex items-center justify-center text-[12.5px] ${
                   marks.has(day)
                     ? 'bg-[oklch(0.62_0.13_250)] text-white font-bold'
@@ -109,12 +117,17 @@ export function PrayerDetail() {
 
       <div className="mt-6">
         {confirmingDelete ? (
-          <div className="bg-white border border-[oklch(0.88_0.06_25)] rounded-lg p-4">
+          <div
+            role="alertdialog"
+            aria-label="Delete prayer?"
+            className="bg-white border border-[oklch(0.88_0.06_25)] rounded-lg p-4"
+          >
             <div className="text-[13.5px] font-semibold text-[oklch(0.4_0.1_25)] mb-3">
               Delete forever? This erases its prayer history.
             </div>
             <div className="flex gap-2.5">
               <button
+                autoFocus
                 onClick={() => setConfirmingDelete(false)}
                 className="flex-1 py-2.5 rounded-lg bg-[oklch(0.95_0.01_245)] text-[oklch(0.5_0.03_255)] font-bold text-[13px]"
               >

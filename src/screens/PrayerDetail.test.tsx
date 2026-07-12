@@ -6,6 +6,7 @@ import { saveCache } from '../store/persistence'
 import { demoState } from '../test/fixtures'
 import { todayStr } from '../lib/time'
 import { PrayerDetail, monthGrid } from './PrayerDetail'
+import { executeWrite } from '../sync/hydrate'
 
 vi.mock('../sync/hydrate', () => ({
   executeWrite: vi.fn(async () => {}),
@@ -107,6 +108,7 @@ describe('calendar date toggle', () => {
     expect(before).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: `${day} — tap to mark prayed` }))
     expect(screen.getByText(/Prayed 1 day$/i)).toBeInTheDocument()
+    expect(executeWrite).toHaveBeenCalledWith(expect.objectContaining({ table: 'prayer_logs', op: 'insert' }))
     expect(screen.getByRole('button', { name: `${day}, prayed — tap to unmark` })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: `${day}, prayed — tap to unmark` }))
     expect(screen.getByText(/Prayed 0 days/i)).toBeInTheDocument()
@@ -136,6 +138,9 @@ describe('delete prayer', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
     // PrayerDetail unmounts (screen changed + prayer gone)
     expect(screen.queryByText(/Grandma Ruth's recovery/)).not.toBeInTheDocument()
+    expect(executeWrite).toHaveBeenCalledWith(
+      expect.objectContaining({ table: 'prayers', op: 'delete', match: { id: 'p1' } })
+    )
   })
 
   it('cancel restores the quiet button', async () => {
@@ -145,6 +150,15 @@ describe('delete prayer', () => {
     expect(screen.queryByText(/Delete forever\?/)).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Delete prayer' })).toBeInTheDocument()
     expect(screen.getByText(/Grandma Ruth's recovery/)).toBeInTheDocument()
+  })
+
+  it('Escape cancels the confirm', async () => {
+    seeded('p1')
+    await userEvent.click(screen.getByRole('button', { name: 'Delete prayer' }))
+    expect(screen.getByText(/Delete forever\?/)).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByText(/Delete forever\?/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Delete prayer' })).toBeInTheDocument()
   })
 })
 
