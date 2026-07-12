@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../store/StoreContext'
 import { CategoryTag } from '../components/CategoryTag'
 import { daysPrayed, monthMarks } from '../lib/history'
+import { todayStr } from '../lib/time'
 
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
 
@@ -20,11 +21,15 @@ export function PrayerDetail() {
   const { state, dispatch } = useStore()
   const now = new Date()
   const [cursor, setCursor] = useState({ year: now.getFullYear(), month: now.getMonth() + 1 })
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const prayer = state.prayers.find(p => p.id === state.activePrayerId)
   if (!prayer || state.screen !== 'prayerDetail') return null
   const category = state.categories.find(c => c.id === prayer.categoryId)
   const total = daysPrayed(state.logs, prayer.id)
   const marks = monthMarks(state.logs, prayer.id, cursor.year, cursor.month)
+  const today = todayStr()
+  const cellDate = (day: number) =>
+    `${cursor.year}-${String(cursor.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
   const monthLabel = new Date(cursor.year, cursor.month - 1).toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric',
@@ -72,21 +77,65 @@ export function PrayerDetail() {
           {monthGrid(cursor.year, cursor.month).map((day, i) =>
             day === null ? (
               <div key={`pad-${i}`} />
-            ) : (
-              <div
+            ) : cellDate(day) <= today ? (
+              <button
                 key={day}
-                aria-label={`${day}${marks.has(day) ? ', prayed' : ''}`}
+                onClick={() =>
+                  dispatch({ type: 'TOGGLE_PRAYED', id: prayer.id, date: cellDate(day), logId: crypto.randomUUID() })
+                }
+                aria-label={
+                  marks.has(day) ? `${day}, prayed — tap to unmark` : `${day} — tap to mark prayed`
+                }
                 className={`mx-auto w-8 h-8 rounded-full flex items-center justify-center text-[12.5px] ${
                   marks.has(day)
                     ? 'bg-[oklch(0.62_0.13_250)] text-white font-bold'
-                    : 'text-[oklch(0.45_0.02_250)]'
+                    : 'text-[oklch(0.45_0.02_250)] hover:bg-[oklch(0.93_0.02_245)]'
                 }`}
+              >
+                {day}
+              </button>
+            ) : (
+              <div
+                key={day}
+                aria-label={`${day}`}
+                className="mx-auto w-8 h-8 rounded-full flex items-center justify-center text-[12.5px] text-[oklch(0.78_0.01_250)]"
               >
                 {day}
               </div>
             )
           )}
         </div>
+      </div>
+
+      <div className="mt-6">
+        {confirmingDelete ? (
+          <div className="bg-white border border-[oklch(0.88_0.06_25)] rounded-lg p-4">
+            <div className="text-[13.5px] font-semibold text-[oklch(0.4_0.1_25)] mb-3">
+              Delete forever? This erases its prayer history.
+            </div>
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => setConfirmingDelete(false)}
+                className="flex-1 py-2.5 rounded-lg bg-[oklch(0.95_0.01_245)] text-[oklch(0.5_0.03_255)] font-bold text-[13px]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => dispatch({ type: 'DELETE_PRAYER', id: prayer.id })}
+                className="flex-1 py-2.5 rounded-lg bg-[oklch(0.55_0.18_25)] text-white font-bold text-[13px]"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmingDelete(true)}
+            className="w-full py-2.5 rounded-lg text-[13px] font-bold text-[oklch(0.55_0.14_25)] bg-[oklch(0.96_0.02_25)]"
+          >
+            <span aria-hidden="true">🗑 </span>Delete prayer
+          </button>
+        )}
       </div>
     </div>
   )

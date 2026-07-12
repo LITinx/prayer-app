@@ -82,7 +82,7 @@ describe('PrayerDetail', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
     }
     expect(screen.getByText('December 2025')).toBeInTheDocument()
-    expect(screen.getByLabelText('15, prayed')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '15, prayed — tap to unmark' })).toBeInTheDocument()
   })
 
   it('back from an answered prayer lands on the Answered screen', async () => {
@@ -91,6 +91,60 @@ describe('PrayerDetail', () => {
     render(<App />)
     await userEvent.click(screen.getByText('‹ Back'))
     expect(screen.getByText('Looking back with gratitude')).toBeInTheDocument()
+  })
+})
+
+describe('calendar date toggle', () => {
+  it('taps an unmarked past date to mark it, and again to unmark', async () => {
+    seeded('p4') // p4 has no logs
+    const today = new Date()
+    // guaranteed-past cell: use day 1 unless today IS the 1st, then page back a month
+    let day = 1
+    if (today.getDate() === 1) {
+      await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
+    }
+    const before = screen.getByText(/Prayed 0 days/i)
+    expect(before).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: `${day} — tap to mark prayed` }))
+    expect(screen.getByText(/Prayed 1 day$/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: `${day}, prayed — tap to unmark` })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: `${day}, prayed — tap to unmark` }))
+    expect(screen.getByText(/Prayed 0 days/i)).toBeInTheDocument()
+  })
+
+  it('future dates are not tappable', async () => {
+    seeded('p4')
+    await userEvent.click(screen.getByRole('button', { name: 'Next month' }))
+    // every cell next month is future: no toggle buttons exist
+    expect(screen.queryByRole('button', { name: /tap to mark prayed/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /tap to unmark/ })).not.toBeInTheDocument()
+  })
+
+  it('toggling today on the calendar syncs with prayed state', async () => {
+    seeded('p4')
+    const dayNum = new Date().getDate()
+    await userEvent.click(screen.getByRole('button', { name: `${dayNum} — tap to mark prayed` }))
+    expect(screen.getByRole('button', { name: `${dayNum}, prayed — tap to unmark` })).toBeInTheDocument()
+  })
+})
+
+describe('delete prayer', () => {
+  it('confirm flow deletes an active prayer', async () => {
+    seeded('p1')
+    await userEvent.click(screen.getByRole('button', { name: 'Delete prayer' }))
+    expect(screen.getByText(/Delete forever\?/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    // PrayerDetail unmounts (screen changed + prayer gone)
+    expect(screen.queryByText(/Grandma Ruth's recovery/)).not.toBeInTheDocument()
+  })
+
+  it('cancel restores the quiet button', async () => {
+    seeded('p1')
+    await userEvent.click(screen.getByRole('button', { name: 'Delete prayer' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByText(/Delete forever\?/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Delete prayer' })).toBeInTheDocument()
+    expect(screen.getByText(/Grandma Ruth's recovery/)).toBeInTheDocument()
   })
 })
 
