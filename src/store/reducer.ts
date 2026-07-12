@@ -14,6 +14,7 @@ export type Action =
   | { type: 'TOGGLE_PRAYED'; id: string; date: string; logId: string }
   | { type: 'MARK_ANSWERED'; id: string; now: number }
   | { type: 'UNDO_ANSWERED'; id: string }
+  | { type: 'DELETE_PRAYER'; id: string }
   | { type: 'ADD_PRAYER'; id: string; text: string; categoryId: string; now: number }
   | { type: 'ADD_CATEGORY'; id: string; name: string; hue: number }
   | { type: 'TOGGLE_FEED_PRAY'; groupId: string; feedId: string }
@@ -53,6 +54,18 @@ export function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         prayers: state.prayers.map(p => (p.id === action.id ? { ...p, answeredAt: null } : p)),
+      }
+    }
+
+    case 'DELETE_PRAYER': {
+      const p = state.prayers.find(x => x.id === action.id)
+      if (!p) return state
+      return {
+        ...state,
+        screen: p.answeredAt === null ? 'home' : 'answered',
+        activePrayerId: null,
+        prayers: state.prayers.filter(x => x.id !== action.id),
+        logs: state.logs.filter(l => l.prayerId !== action.id),
       }
     }
 

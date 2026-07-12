@@ -33,9 +33,9 @@ export type Write =
   | { table: string; op: 'delete'; match: Record<string, unknown> }
 
 /**
- * Maps a data-changing action to its Supabase write. `hadLogToday` is the
- * pre-dispatch state for TOGGLE_PRAYED (checked → delete, unchecked → insert).
- * Local-only actions return null.
+ * Maps a data-changing action to its Supabase write. `hadLogToday` is whether
+ * the toggled (prayer, date) log row existed pre-dispatch (checked → delete,
+ * unchecked → insert). Local-only actions return null.
  */
 export function writeForAction(action: Action, userId: string, ctx: { hadLogToday: boolean }): Write | null {
   switch (action.type) {
@@ -54,6 +54,9 @@ export function writeForAction(action: Action, userId: string, ctx: { hadLogToda
       return { table: 'prayers', op: 'update', match: { id: action.id }, values: { answered_at: new Date(action.now).toISOString() } }
     case 'UNDO_ANSWERED':
       return { table: 'prayers', op: 'update', match: { id: action.id }, values: { answered_at: null } }
+    case 'DELETE_PRAYER':
+      // prayer_logs cascade via the FK; one delete removes prayer + history
+      return { table: 'prayers', op: 'delete', match: { id: action.id } }
     default:
       return null
   }

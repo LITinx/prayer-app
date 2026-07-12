@@ -113,6 +113,25 @@ describe('HYDRATE / SYNC_ERROR', () => {
   })
 })
 
+describe('DELETE_PRAYER', () => {
+  it('removes an active prayer and its logs, returning home', () => {
+    const s = reducer(base(), { type: 'DELETE_PRAYER', id: 'p1' })
+    expect(s.prayers.find(p => p.id === 'p1')).toBeUndefined()
+    expect(s.logs.filter(l => l.prayerId === 'p1')).toHaveLength(0)
+    expect(s.logs.filter(l => l.prayerId === 'p2')).toHaveLength(3) // others untouched
+    expect(s.screen).toBe('home')
+    expect(s.activePrayerId).toBeNull()
+  })
+  it('removes an answered prayer, returning to answered', () => {
+    const s = reducer(base(), { type: 'DELETE_PRAYER', id: 'a1' })
+    expect(s.prayers.find(p => p.id === 'a1')).toBeUndefined()
+    expect(s.screen).toBe('answered')
+  })
+  it('ignores unknown ids', () => {
+    expect(reducer(base(), { type: 'DELETE_PRAYER', id: 'nope' })).toEqual(base())
+  })
+})
+
 describe('TOGGLE_FEED_PRAY', () => {
   it('toggles on: increments count', () => {
     const s = reducer(base(), { type: 'TOGGLE_FEED_PRAY', groupId: 'g1', feedId: 'f1' })

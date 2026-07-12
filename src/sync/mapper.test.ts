@@ -50,6 +50,10 @@ describe('writeForAction', () => {
     expect(writeForAction({ type: 'UNDO_ANSWERED', id: 'p1' }, uid, { hadLogToday: false }))
       .toEqual({ table: 'prayers', op: 'update', match: { id: 'p1' }, values: { answered_at: null } })
   })
+  it('DELETE_PRAYER → prayers delete (logs cascade server-side)', () => {
+    expect(writeForAction({ type: 'DELETE_PRAYER', id: 'p1' }, uid, { hadLogToday: false }))
+      .toEqual({ table: 'prayers', op: 'delete', match: { id: 'p1' } })
+  })
   it('local-only actions → null', () => {
     expect(writeForAction({ type: 'NAVIGATE', screen: 'home' }, uid, { hadLogToday: false })).toBeNull()
     expect(writeForAction({ type: 'TOGGLE_FEED_PRAY', groupId: 'g1', feedId: 'f1' }, uid, { hadLogToday: false })).toBeNull()
