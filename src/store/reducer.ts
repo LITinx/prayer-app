@@ -11,7 +11,7 @@ export type Action =
   | { type: 'NAVIGATE'; screen: Screen }
   | { type: 'OPEN_GROUP'; groupId: string }
   | { type: 'OPEN_PRAYER'; id: string }
-  | { type: 'TOGGLE_PRAYED'; id: string; today: string; logId: string }
+  | { type: 'TOGGLE_PRAYED'; id: string; date: string; logId: string }
   | { type: 'MARK_ANSWERED'; id: string; now: number }
   | { type: 'UNDO_ANSWERED'; id: string }
   | { type: 'ADD_PRAYER'; id: string; text: string; categoryId: string; now: number }
@@ -33,10 +33,10 @@ export function reducer(state: AppState, action: Action): AppState {
 
     case 'TOGGLE_PRAYED': {
       if (!state.prayers.some(p => p.id === action.id)) return state
-      const existing = state.logs.find(l => l.prayerId === action.id && l.prayedOn === action.today)
+      const existing = state.logs.find(l => l.prayerId === action.id && l.prayedOn === action.date)
       const logs = existing
         ? state.logs.filter(l => l !== existing)
-        : [...state.logs, { id: action.logId, prayerId: action.id, prayedOn: action.today }]
+        : [...state.logs, { id: action.logId, prayerId: action.id, prayedOn: action.date }]
       return { ...state, logs }
     }
 

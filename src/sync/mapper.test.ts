@@ -37,11 +37,11 @@ describe('writeForAction', () => {
       .toEqual({ table: 'categories', op: 'insert', conflictKey: 'id', values: { id: 'c9', user_id: 'u1', name: 'Missions', hue: 180 } })
   })
   it('TOGGLE_PRAYED (was unchecked) → log insert', () => {
-    expect(writeForAction({ type: 'TOGGLE_PRAYED', id: 'p1', today: '2026-07-11', logId: 'l1' }, uid, { hadLogToday: false }))
+    expect(writeForAction({ type: 'TOGGLE_PRAYED', id: 'p1', date: '2026-07-11', logId: 'l1' }, uid, { hadLogToday: false }))
       .toEqual({ table: 'prayer_logs', op: 'insert', conflictKey: 'prayer_id,prayed_on', values: { id: 'l1', user_id: 'u1', prayer_id: 'p1', prayed_on: '2026-07-11' } })
   })
   it('TOGGLE_PRAYED (was checked) → log delete by prayer+date', () => {
-    expect(writeForAction({ type: 'TOGGLE_PRAYED', id: 'p1', today: '2026-07-11', logId: 'l2' }, uid, { hadLogToday: true }))
+    expect(writeForAction({ type: 'TOGGLE_PRAYED', id: 'p1', date: '2026-07-11', logId: 'l2' }, uid, { hadLogToday: true }))
       .toEqual({ table: 'prayer_logs', op: 'delete', match: { prayer_id: 'p1', prayed_on: '2026-07-11' } })
   })
   it('MARK_ANSWERED / UNDO_ANSWERED → prayers update', () => {

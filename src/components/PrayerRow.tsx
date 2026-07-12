@@ -15,7 +15,7 @@ export function PrayerRow({ prayer, first }: { prayer: Prayer; first: boolean })
       <button
         aria-label={`Mark "${prayer.text}" as prayed`}
         aria-pressed={prayed}
-        onClick={() => dispatch({ type: 'TOGGLE_PRAYED', id: prayer.id, today, logId: crypto.randomUUID() })}
+        onClick={() => dispatch({ type: 'TOGGLE_PRAYED', id: prayer.id, date: today, logId: crypto.randomUUID() })}
         className={`w-6 h-6 flex-none mt-0.5 rounded-[5px] flex items-center justify-center transition-all ${
           prayed
             ? 'bg-[oklch(0.62_0.13_250)] border border-[oklch(0.62_0.13_250)]'

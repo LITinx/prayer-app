@@ -59,11 +59,11 @@ export function StoreProvider({ userId, children }: { userId: string; children: 
   // write-through dispatch: local state updates synchronously, the matching
   // Supabase write is queued behind prior writes and fires with one retry.
   const syncDispatch: Dispatch<Action> = action => {
-    const hadLogToday =
+    const hadLog =
       action.type === 'TOGGLE_PRAYED' &&
-      stateRef.current.logs.some(l => l.prayerId === action.id && l.prayedOn === action.today)
+      stateRef.current.logs.some(l => l.prayerId === action.id && l.prayedOn === action.date)
     dispatch(action)
-    const write = writeForAction(action, userId, { hadLogToday })
+    const write = writeForAction(action, userId, { hadLogToday: hadLog })
     if (!write) return
     dirtyRef.current = true
     writeChain.current = writeChain.current.then(() =>

@@ -48,8 +48,8 @@ export function writeForAction(action: Action, userId: string, ctx: { hadLogToda
       return { table: 'categories', op: 'insert', conflictKey: 'id', values: { id: action.id, user_id: userId, name: action.name, hue: action.hue } }
     case 'TOGGLE_PRAYED':
       return ctx.hadLogToday
-        ? { table: 'prayer_logs', op: 'delete', match: { prayer_id: action.id, prayed_on: action.today } }
-        : { table: 'prayer_logs', op: 'insert', conflictKey: 'prayer_id,prayed_on', values: { id: action.logId, user_id: userId, prayer_id: action.id, prayed_on: action.today } }
+        ? { table: 'prayer_logs', op: 'delete', match: { prayer_id: action.id, prayed_on: action.date } }
+        : { table: 'prayer_logs', op: 'insert', conflictKey: 'prayer_id,prayed_on', values: { id: action.logId, user_id: userId, prayer_id: action.id, prayed_on: action.date } }
     case 'MARK_ANSWERED':
       return { table: 'prayers', op: 'update', match: { id: action.id }, values: { answered_at: new Date(action.now).toISOString() } }
     case 'UNDO_ANSWERED':

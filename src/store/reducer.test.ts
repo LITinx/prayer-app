@@ -25,23 +25,23 @@ describe('NAVIGATE / OPEN_GROUP / OPEN_PRAYER', () => {
 
 describe('TOGGLE_PRAYED (log-based)', () => {
   it('checking inserts a log row for today with the given id', () => {
-    const s = reducer(base(), { type: 'TOGGLE_PRAYED', id: 'p1', today, logId: 'log-x' })
+    const s = reducer(base(), { type: 'TOGGLE_PRAYED', id: 'p1', date: today, logId: 'log-x' })
     expect(s.logs).toContainEqual({ id: 'log-x', prayerId: 'p1', prayedOn: today })
     expect(prayedToday(s.logs, 'p1', today)).toBe(true)
     expect(streak(s.logs, 'p1', today)).toBe(7) // 6 ending yesterday + today
   })
   it('unchecking removes today’s log row', () => {
-    let s = reducer(base(), { type: 'TOGGLE_PRAYED', id: 'p1', today, logId: 'log-x' })
-    s = reducer(s, { type: 'TOGGLE_PRAYED', id: 'p1', today, logId: 'log-y' })
+    let s = reducer(base(), { type: 'TOGGLE_PRAYED', id: 'p1', date: today, logId: 'log-x' })
+    s = reducer(s, { type: 'TOGGLE_PRAYED', id: 'p1', date: today, logId: 'log-y' })
     expect(prayedToday(s.logs, 'p1', today)).toBe(false)
     expect(streak(s.logs, 'p1', today)).toBe(6)
   })
   it('is a no-op for unknown prayer ids', () => {
-    const s = reducer(base(), { type: 'TOGGLE_PRAYED', id: 'nope', today, logId: 'log-x' })
+    const s = reducer(base(), { type: 'TOGGLE_PRAYED', id: 'nope', date: today, logId: 'log-x' })
     expect(s).toEqual(base())
   })
   it('is idempotent across StrictMode double runs — same action from same base cannot duplicate logs', () => {
-    const a = { type: 'TOGGLE_PRAYED', id: 'p1', today, logId: 'log-x' } as const
+    const a = { type: 'TOGGLE_PRAYED', id: 'p1', date: today, logId: 'log-x' } as const
     const s1 = reducer(base(), a)
     const s2 = reducer(base(), a)
     expect(s1.logs.filter(l => l.prayerId === 'p1' && l.prayedOn === today)).toEqual([
