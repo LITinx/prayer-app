@@ -130,6 +130,12 @@ describe('DELETE_PRAYER', () => {
   it('ignores unknown ids', () => {
     expect(reducer(base(), { type: 'DELETE_PRAYER', id: 'nope' })).toEqual(base())
   })
+  it('clears activePrayerId when deleting the open answered prayer', () => {
+    const s0 = { ...base(), screen: 'prayerDetail' as const, activePrayerId: 'a1' }
+    const s = reducer(s0, { type: 'DELETE_PRAYER', id: 'a1' })
+    expect(s.activePrayerId).toBeNull()
+    expect(s.screen).toBe('answered')
+  })
 })
 
 describe('TOGGLE_FEED_PRAY', () => {

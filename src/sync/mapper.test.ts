@@ -54,6 +54,10 @@ describe('writeForAction', () => {
     expect(writeForAction({ type: 'DELETE_PRAYER', id: 'p1' }, uid, { hadLogToday: false }))
       .toEqual({ table: 'prayers', op: 'delete', match: { id: 'p1' } })
   })
+  it('DELETE_PRAYER write is independent of ctx — logs never get a separate delete', () => {
+    expect(writeForAction({ type: 'DELETE_PRAYER', id: 'p1' }, uid, { hadLogToday: true }))
+      .toEqual({ table: 'prayers', op: 'delete', match: { id: 'p1' } })
+  })
   it('local-only actions → null', () => {
     expect(writeForAction({ type: 'NAVIGATE', screen: 'home' }, uid, { hadLogToday: false })).toBeNull()
     expect(writeForAction({ type: 'TOGGLE_FEED_PRAY', groupId: 'g1', feedId: 'f1' }, uid, { hadLogToday: false })).toBeNull()
